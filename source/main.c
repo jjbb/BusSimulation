@@ -1,15 +1,17 @@
 #include "main.h"
 
-int main(void){
-    
+int main(void)
+{
+
     int pDataHead = 0x22000080;
     char dataValue[] = "Hello";
     char newValue[] = "world";
     char *pDataSend = NULL;
     char *pReceiveData = NULL;
-    int DataLenS = 9;
+    int DataLenS = 0;
+    int DataLenR = 0;
     int newDataValueLen = 5;
-    int i=0;
+    int i = 0;
     int j = 0;
     int count = 0;
     unsigned int clockTime = 0;
@@ -17,80 +19,149 @@ int main(void){
     int containHead = 0;
 
     initBusModules();
-    setModuleRegisterBuf(HOST_IP, dataValue, 5);
-    setModuleTriggerNum(HOST_IP, triggerNumber);
+    // setModuleRegisterBuf(HOST_IP, dataValue, 5);
+    // setModuleTriggerNum(HOST_IP, triggerNumber);
 
     //synchronize the time of all modules
     // syncClockTime(clockTime);
 
-    while(1){
-        if(count >= 10){
+    while (1)
+    {
+        if (count >= 10)
+        {
             count = 0;
+            // "0 00000 01000 0 0000000000000 1000100"
+            //³õÊ¼»¯Òª·¢ËÍµÄÊı¾İ£¬"0010001 0000000000000 0 00010 00000 0" + "Hello"; appÏûÏ¢
+            //              ÏûÏ¢´óÀàºÍÓÅÏÈ¼¶    ÏûÏ¢Ğ¡Àà    ÊÇ·ñÖØ·¢ Ä¿µÄµØÖ· Ô´µØÖ· µ¥Ö¡     ÏûÏ¢ÄÚÈİ
             j = 0;
-            pDataSend = (char*)malloc(sizeof(char) * DataLenS);
-            while(*(dataValue + j) != 0){
-                *(pDataSend + 4 + j) = *(dataValue+j);
+            DataLenS = 9;
+            pDataSend = (char *)malloc(sizeof(char) * DataLenS);
+            while (*(dataValue + j) != 0)
+            {
+                *(pDataSend + 4 + j) = *(dataValue + j);
                 j++;
             }
             pDataSend[3] = 0x22;
             pDataSend[2] = 0x00;
             pDataSend[1] = 0x00;
             pDataSend[0] = 0x80;
-            // *(pDataSend) = pDataHead; 
-            
-            sendDataToIbusSimulation((char*)pDataSend, DataLenS);
+            // *(pDataSend) = pDataHead;
+
+            sendDataToIbusSimulation((char *)pDataSend, DataLenS);
         }
-        count ++;
-       
+
+        if (count == 4)
+        {
+            //³õÊ¼»¯Òª·¢ËÍµÄÊı¾İ£¬"0010100 1000000000000 0 00001 00000 0" + "Hello"; ´¥·¢ÏßÅäÖÃÏûÏ¢
+            //              ÏûÏ¢´óÀàºÍÓÅÏÈ¼¶    ÏûÏ¢Ğ¡Àà    ÊÇ·ñÖØ·¢ Ä¿µÄµØÖ· Ô´µØÖ· µ¥Ö¡     ÏûÏ¢ÄÚÈİ
+            j = 0;
+            DataLenS = 6;
+            pDataSend = (char *)malloc(sizeof(char) * DataLenS);
+            pDataSend[5] = 0x00;
+            pDataSend[4] = 0x01;
+            pDataSend[3] = 0x29;
+            pDataSend[2] = 0x00;
+            pDataSend[1] = 0x00;
+            pDataSend[0] = 0x40;
+
+            sendDataToIbusSimulation((char *)pDataSend, DataLenS);
+        }
+
+        if (count == 8)
+        {
+            //³õÊ¼»¯Òª·¢ËÍµÄÊı¾İ£¬"0010100 1000000000011 0 00001 00000 0" + "0x0001"; ÊôĞÔÅäÖÃÏûÏ¢
+            //              ÏûÏ¢´óÀàºÍÓÅÏÈ¼¶    ÏûÏ¢Ğ¡Àà    ÊÇ·ñÖØ·¢ Ä¿µÄµØÖ· Ô´µØÖ· µ¥Ö¡     ÏûÏ¢ÄÚÈİ
+            j = 0;
+            DataLenS = 9;
+            pDataSend = (char *)malloc(sizeof(char) * DataLenS);
+            while (*(dataValue + j) != 0)
+            {
+                *(pDataSend + 4 + j) = *(dataValue + j);
+                j++;
+            }
+            pDataSend[3] = 0x29;
+            pDataSend[2] = 0x00;
+            pDataSend[1] = 0x30;
+            pDataSend[0] = 0x40;
+
+            sendDataToIbusSimulation((char *)pDataSend, DataLenS);
+        }
+
         // char *pReceiveData = (char*)malloc(sizeof(char) * DataLenS);
-        int DataLenR = 0;
-        if(isDataEmpty() < 1){
-            handleSimulationData(dataValue, newValue, newDataValueLen);
-            // transeDataFromHostSimulation(&pDataSend, &DataLenS);	//å†é€šè¿‡ä¸»æœºè½¬å‘ç»™å…¶ä»–è™šæ‹Ÿæ¨¡å—
-            receiveDataFromIbusSimulation(&pReceiveData, &DataLenR);
-            containHead = 1;
-            printMessage(pReceiveData, DataLenR, containHead);
-        }
-        
-        generateModuleTriggerSignal();
-        if(TriggerSig1 == 1){
-            //event1 happen
-            printf("Event 1 is triggered!!!\n");
-            if( 1 == getModuleRegisterBuf(HOST_IP, &pReceiveData, &DataLenR) ){
-                containHead = 0;
+        if ((count % 2) == 1)
+        {
+            if (isDataEmpty() < 1)
+            {
+                handleSimulationData(dataValue, newValue, newDataValueLen);
+                receiveDataFromIbusSimulation(&pReceiveData, &DataLenR);
+                containHead = 1;
                 printMessage(pReceiveData, DataLenR, containHead);
             }
         }
 
-        if(TriggerSig2 == 1){
+        generateModuleTriggerSignal();
+        if (TriggerSig1 == 1)
+        {
+            //event1 happen
+            printf("Event 1 is triggered!!!\n");
+            if (1 == getModuleRegisterBuf(HOST_IP, &pReceiveData, &DataLenR))
+            {
+                containHead = 0;
+                printf("Read the register:\n");
+                printMessage(pReceiveData, DataLenR, containHead);
+            }
+        }
+
+        if (TriggerSig2 == 1)
+        {
             //event2 happen
             printf("Event 2 is triggered!!!\n");
         }
-        
+        count++;
     }
     printf("Hello world");
     return 0;
 }
 
-void printMessage(char* string, unsigned int stringLen, int containHead){
+void printMessage(char *string, unsigned int stringLen, int containHead)
+{
     int i;
-    if( containHead ){
-        for(i=0; i<4; i++){
-            printf("The head of the message is:");
-            printf("%x ", *(string + i));
-            printf("\n");
+    if (containHead)
+    {
+        printf("The head of the message is:");
+        for (i = 0; i < 4; i++)
+        {
+            printf("0x%02x ", *(string + i));
         }
-        for(; i<stringLen; i++){
-            printf("The value of the message is:");
-            printf("%c", *(string + i));
-            printf("\n");
+        printf("\n");
+
+        printf("The value of the message is:");
+        for (; i < stringLen; i++)
+        {
+            if ((*(string + i) > 'a' && *(string + i) < 'z') || (*(string + i) > 'A' && *(string + i) < 'Z'))
+            {
+                printf("%c", *(string + i));
+            }
+            else
+            {
+                printf("0x%02x ", *(string + i));
+            }
         }
-    }else{
-        for(i=0; i<stringLen; i++){
-             printf("The value of the data is:");
-            printf("%c", *(string + i));
-            printf("\n");
-        }
+        printf("\n");
     }
-    
+    else
+    {
+        for (i=0; i < stringLen; i++)
+        {
+            if ((*(string + i) > 'a' && *(string + i) < 'z') || (*(string + i) > 'A' && *(string + i) < 'Z'))
+            {
+                printf("%c", *(string + i));
+            }
+            else
+            {
+                printf("0x%02x ", *(string + i));
+            }
+        }
+        printf("\n");
+    }
 }

@@ -7,24 +7,26 @@
 //#include "mfi_rsrc_manager.h"
 
 //----------------------------------------------------------------------------
-// 锟斤拷息
+// 消息
 //----------------------------------------------------------------------------
-/*锟斤拷息锟劫裁筹拷 32位*/
+/*消息仲裁场 32位*/
 typedef struct
 {
-	MfiUInt32 m_single     : 1;     //锟叫断碉拷帧锟斤拷锟斤拷锟斤拷锟斤拷 0.锟斤拷帧 1.锟斤拷锟斤拷
-	MfiUInt32 m_src_addr   : 5;     //源锟斤拷址
-	MfiUInt32 m_dst_addr   : 5;     //目锟侥碉拷址
-	MfiUInt32 m_retry      : 1;     //锟斤拷锟斤拷锟斤拷息锟角凤拷锟截凤拷
-	MfiUInt32 m_type       : 13;    //锟斤拷息锟斤拷锟酵ｏ拷锟斤拷锟斤拷锟竭诧拷协锟斤拷
-	MfiUInt32 m_class0     : 1;     //锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷锟斤拷0位
-	MfiUInt32 priority0    : 1;     //锟斤拷锟饺硷拷锟斤拷0位
-	MfiUInt32 m_class1     : 1;     //锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷锟斤拷1位
-	MfiUInt32 priority1    : 1;     //锟斤拷锟饺硷拷锟斤拷1位
-	MfiUInt32 m_class2     : 1;     //锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷锟斤拷2位
-	MfiUInt32 priority2    : 1;     //锟斤拷锟饺硷拷锟斤拷2位
-	MfiUInt32 m_class3     : 1;     //锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷锟斤拷3位
+	MfiUInt32 m_single     : 1;     //判断单帧或连续： 0.单帧 1.连续
+	MfiUInt32 m_src_addr   : 5;     //源地址
+	MfiUInt32 m_dst_addr   : 5;     //目的地址
+	MfiUInt32 m_retry      : 1;     //标记消息是否重发
+	MfiUInt32 m_type       : 13;    //消息类型，留给高层协议
+	MfiUInt32 m_class0     : 1;     //仪器消息大类第0位
+	MfiUInt32 priority0    : 1;     //优先级第0位
+	MfiUInt32 m_class1     : 1;     //仪器消息大类第1位
+	MfiUInt32 priority1    : 1;     //优先级第1位
+	MfiUInt32 m_class2     : 1;     //仪器消息大类第2位
+	MfiUInt32 priority2    : 1;     //优先级第2位
+	MfiUInt32 m_class3     : 1;     //仪器消息大类第3位
 }MID_BITS;
+
+#define Head_Len 4
 
 typedef union
 {
@@ -32,7 +34,7 @@ typedef union
 	MID_BITS  bit;
 }MID_REG;
 
-/*锟斤拷息锟斤拷锟斤拷 96位*/
+/*消息内容 96位*/
 typedef union
 {
 	MfiByte   m_char[4];
@@ -40,7 +42,7 @@ typedef union
 	MfiUInt32 m_int;
 }MTXT_REG;
 
-/*锟斤拷息锟结构锟斤拷*/
+/*消息结构体*/
 typedef struct
 {
 	MID_REG  m_id;
@@ -49,36 +51,36 @@ typedef struct
 	MTXT_REG m_txt3;
 }MSG,*MSG_p;
 
-/*锟斤拷息锟斤拷锟斤拷锟斤拷*/
-//锟斤拷锟斤拷/锟斤拷锟斤拷fifo
+/*消息缓存区*/
+//发送/接收fifo
 typedef struct __MSG_Fifo
 {
-	 MfiBoolean               empty;						  	  //FIFO锟秸憋拷志位
-	 MfiBoolean               full;							    	//FIFO锟斤拷锟斤拷志位
+	 MfiBoolean               empty;						  	  //FIFO空标志位
+	 MfiBoolean               full;							    	//FIFO满标志位
 	//  pthread_mutex_t          lock;
 	//  pthread_cond_t           ready;
-	 MSG_p                    buf;	                  //锟斤拷锟斤拷FIFO
-	 MfiUInt32                Msg_Fifo_Len;           //FIFO锟斤拷锟斤拷
-	 MfiUInt32                rIndex;					        //锟斤拷前锟缴斤拷锟叫讹拷锟斤拷锟斤拷锟斤拷FIFO指锟斤拷
-	 MfiUInt32                wIndex;					        //锟斤拷前锟缴斤拷锟斤拷写锟斤拷锟斤拷锟斤拷FIFO指锟斤拷
-	 MfiByte                  number[SESSION_MAX_NUM];//锟斤拷锟节硷拷录锟斤拷锟酵碉拷每一锟斤拷模锟斤拷锟斤拷锟斤拷息锟侥碉拷前锟斤拷锟斤拷/锟斤拷锟节硷拷录锟斤拷同锟斤拷锟斤拷源锟侥达拷锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷
-	 MSG_p                    tmpbuf[SESSION_MAX_NUM];//锟斤拷锟斤拷锟捷存发锟酵碉拷每一锟斤拷模锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷锟斤拷模锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟捷达拷锟秸硷拷
+	 MSG_p                    buf;	                  //缓存FIFO
+	 MfiUInt32                Msg_Fifo_Len;           //FIFO深度
+	 MfiUInt32                rIndex;					        //当前可进行读操作的FIFO指针
+	 MfiUInt32                wIndex;					        //当前可进行写操作的FIFO指针
+	 MfiByte                  number[SESSION_MAX_NUM];//用于记录发送到每一个模块的消息的当前编号/用于记录不同发送源的待接收消息编号
+	 MSG_p                    tmpbuf[SESSION_MAX_NUM];//用于暂存发送到每一个模块的消息；根据模块的数量分配暂存空间
 }MSG_Fifo,*MSG_Fifo_p;
-/*锟斤拷息锟斤拷锟斤拷锟斤拷*/
+/*消息缓存区*/
 
 typedef struct _CombMsg_Head
 {
 	struct _CombMsg_Head*     next;
-	MfiUInt16                 memsize;   //锟节达拷锟斤拷锟斤拷小锟斤拷锟酵凤拷时使锟斤拷
-	MfiUInt16                 time;      //锟斤拷锟侥憋拷锟斤拷时锟斤拷
+	MfiUInt16                 memsize;   //内存块大小，释放时使用
+	MfiUInt16                 time;      //报文保存时间
 	MID_REG                   m_id;      //
-	MfiByte                   freamnum;  //锟矫憋拷锟侥帮拷锟斤拷帧锟斤拷
-	MfiByte                   startnum;  //锟矫憋拷锟斤拷锟斤拷始帧锟斤拷锟斤拷
-	MfiByte                   cnt;       //支锟斤拷锟截凤拷锟斤拷锟矫憋拷锟侥伙拷锟叫硷拷帧剩锟洁；锟斤拷支锟斤拷锟截凤拷锟斤拷锟斤拷一帧锟斤拷帧位
-	MfiByte                   len;       //锟矫憋拷锟斤拷锟斤拷息锟斤拷锟捷筹拷锟斤拷
+	MfiByte                   freamnum;  //该报文包含帧数
+	MfiByte                   startnum;  //该报文起始帧编号
+	MfiByte                   cnt;       //支持重发：该报文还有几帧剩余；不支持重发：下一帧的帧位
+	MfiByte                   len;       //该报文消息内容长度
 }CombMsg_Head,*CombMsg_Head_p;
 
-//锟斤拷锟斤拷锟斤拷帧锟斤拷锟捷达拷fifo
+//用于组帧的暂存fifo
 typedef struct
 {
 	MfiUInt16                 queue_len;

@@ -8,8 +8,8 @@
 #ifndef BUSCONTROLSIMULATION4LIN_H_
 #define BUSCONTROLSIMULATION4LIN_H_
 
-void sendDataToIbusSimulation(char *pDataSend, int DataLenS);	//���������߿��Ʒ������ݵĺ���
-void receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR); //���������߿��ƻ�ȡ���ݵĺ���
+void sendDataToIbusSimulation(char *pDataSend, int DataLenS);	
+void receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR); 
 void syncClockTime(unsigned int clockTime);
 #define jint int
 #endif /* BUSCONTROLSIMULATION4LIN_H_ */

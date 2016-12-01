@@ -5,38 +5,38 @@
 #include "mfi_module_info.h"
 #include <pthread.h>
 
-//锟斤拷锟捷节碉拷锟结构锟斤拷
+//数据节点结构体
 typedef struct dataNode{
-	char* pdata;//锟斤拷锟斤拷锟斤拷锟斤拷
-	int mdatalen;//锟斤拷示锟斤拷锟捷筹拷锟斤拷
-	struct dataNode *next;//锟斤拷锟斤拷指锟诫，指锟斤拷锟斤拷一锟斤拷锟节碉拷
+	char* pdata;//数据内容
+	int mdatalen;//表示数据长度
+	struct dataNode *next;//数据指针，指向下一个节点
 }busDataNode;
 
-//模锟斤拷前锟斤拷模锟斤拷锟侥结构锟斤拷
+//模拟前端模块的结构体
 typedef struct busSimulationModule{
-	int working;//锟斤拷锟斤拷说锟斤拷锟斤拷锟斤拷模锟斤拷锟角凤拷锟斤拷锟节ｏ拷1锟角达拷锟节ｏ拷-1锟角诧拷锟斤拷锟斤拷
-	busDataNode* dataHeadNode;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷头锟节点，未使锟斤拷时锟斤拷锟结构锟斤拷锟斤拷锟斤拷值锟斤拷默锟斤拷锟斤拷锟斤拷为null
-	busDataNode* dataTailNode;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷尾锟节点，未使锟斤拷时锟斤拷锟结构锟斤拷锟斤拷锟斤拷值锟斤拷默锟斤拷锟斤拷锟斤拷为null
-	int dataLength;//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥筹拷锟斤拷
-	int boardIP;//前锟斤拷模锟斤拷锟斤拷IP锟斤拷未使锟斤拷时默锟斤拷锟斤拷锟斤拷为-1
-	char* registerBuf;//锟侥达拷锟斤拷锟斤拷值锟斤拷未使锟斤拷时默锟斤拷锟斤拷锟斤拷为NULL
+	int working;//用来说明这个模块是否存在，1是存在，-1是不存在
+	busDataNode* dataHeadNode;//用来存放数据内容链表的头节点，未使用时将结构体所有值都默认设置为null
+	busDataNode* dataTailNode;//用来存放数据内容链表的尾节点，未使用时将结构体所有值都默认设置为null
+	int dataLength;//用来存放数据链表的长度
+	int boardIP;//前端模块的IP，未使用时默认设置为-1
+	char* registerBuf;//寄存器的值，未使用时默认设置为NULL
+	int triggerNumber;//被触发的触发线编号，无触发时默认设置为-1
 	unsigned int bufLength;
-	int triggerNumber;//锟斤拷锟斤拷锟斤拷锟侥达拷锟斤拷锟竭憋拷锟脚ｏ拷锟睫达拷锟斤拷时默锟斤拷锟斤拷锟斤拷为-1
 	unsigned int clockTime;
 	// pthread_mutex_t lock;
 
 }busModule;
 
-//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥硷拷使锟斤拷
-void initBusModules();//锟斤拷始锟斤拷锟斤拷锟斤拷锟斤拷前锟斤拷模锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷IP锟斤拷始锟斤拷
-int isDataEmpty();//锟叫讹拷锟斤拷锟斤拷锟斤拷锟角凤拷锟斤拷锟斤拷锟捷ｏ拷也锟斤拷锟斤拷锟叫讹拷锟斤拷锟斤拷模锟介）
-void putDataToModule(int ipNumber, char* pDataHead, int length);//锟斤拷锟秸碉拷锟斤拷锟斤拷锟捷放碉拷指锟斤拷IP锟斤拷锟斤拷锟斤拷前锟斤拷模锟斤拷锟侥碉拷锟斤拷
-int getDataFromModule(char** pDataGotHead, int* gotLength);//锟斤拷取锟斤拷要锟斤拷锟斤拷锟酵碉拷锟斤拷锟捷和筹拷锟斤拷
-int setModuleRegisterBuf(int ipNumber, char* RegisterBuf, unsigned int bufLength);//锟斤拷锟秸碉拷锟斤拷锟斤拷锟斤拷值锟斤拷锟矫碉拷锟斤拷应IP锟斤拷址锟斤拷模锟斤拷锟斤拷
-int getModuleRegisterBuf(int ipNumber, char** gotRegisterBuf, unsigned int *bufLength);//锟斤拷锟斤拷应IP锟斤拷址锟斤拷模锟斤拷锟叫碉拷锟斤拷锟斤拷值锟斤拷取锟斤拷锟斤拷
-int setModuleTriggerNum(int ipNumber, int TriggerNum);//锟斤拷锟秸碉拷锟侥达拷锟斤拷锟竭憋拷锟斤拷值锟斤拷锟矫碉拷锟斤拷应IP锟斤拷址锟斤拷模锟斤拷锟斤拷
-int cancelModuleTriggerNum(int ipNumber);//锟斤拷锟斤拷应IP锟斤拷址锟斤拷模锟斤拷锟叫的达拷锟斤拷锟竭憋拷锟斤拷值取锟斤拷锟斤拷
-void generateModuleTriggerSignal();//锟斤拷为锟斤拷锟斤拷锟斤拷循锟斤拷锟斤拷锟斤拷模锟斤拷锟斤拷锟矫伙拷锟脚猴拷
+//函数声明，给其他文件使用
+void initBusModules();//初始化，创建前端模块虚拟器并完成IP初始化
+int isDataEmpty();//判断总线上是否有数据（也就是判断所有模块）
+void putDataToModule(int ipNumber, char* pDataHead, int length);//将收到的数据放到指定IP的虚拟前端模块的当中
+int getDataFromModule(char** pDataGotHead, int* gotLength);//获取将要被发送的数据和长度
+int setModuleRegisterBuf(int ipNumber, char* RegisterBuf, unsigned int bufLength);//将收到的属性值设置到对应IP地址的模块中
+int getModuleRegisterBuf(int ipNumber, char** gotRegisterBuf, unsigned int *bufLength);//将对应IP地址的模块中的属性值获取出来
+int setModuleTriggerNum(int ipNumber, int TriggerNum);//将收到的触发线编号值设置到对应IP地址的模块中
+int cancelModuleTriggerNum(int ipNumber);//将对应IP地址的模块中的触发线编号值取消掉
+void generateModuleTriggerSignal();//因为触发线循环产生模块的用户信号
 void handleSimulationData();
 void syncModulesTime(unsigned int syncTime);
 
