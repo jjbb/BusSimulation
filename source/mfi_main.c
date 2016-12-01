@@ -8,7 +8,7 @@
 
 #if defined(EMULATOR)||defined(HOST_TEST)
 extern void initBusModules();
-extern int initSuccessFlag;//³õÊ¼»¯³É¹¦±êÖ¾Î»£¬ÕýÎª³õÊ¼»¯³É¹¦£¬¸ºÎªÊ§°Ü£¬0ÎªÎ´²Ù×÷
+extern int initSuccessFlag;//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½Ö¾Î»ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ê¼ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÊ§ï¿½Ü£ï¿½0ÎªÎ´ï¿½ï¿½ï¿½ï¿½
 #endif
 
 #ifdef EMULATOR
@@ -27,16 +27,16 @@ int FUN_MAIN(void)
 	MfiStatus status;
 	MfiPModuleRsrcNodeInfo moudle;
 	
-	//ÏµÍ³³õÊ¼»¯
+	//ÏµÍ³ï¿½ï¿½Ê¼ï¿½ï¿½
 	SystemInit();
 	
 	#if defined(EMULATOR)||defined(HOST_TEST)
-	initBusModules();  	//½øÐÐÐéÄâÇ°¶ËÄ£¿éµÄ×ÜÌå³õÊ¼»¯
-	initSuccessFlag = 1;
+	initBusModules();  	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
+	// initSuccessFlag = 1;
 	printf("emulator bus init success!!!\n");
 	#endif
 	
-	//´ò¿ª×ÊÔ´¹ÜÀíÆ÷
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if((status=MfiOpenDefaultRM(&rm_mfi))!=MFI_SUCCESS){
 		printf("ERROR: MfiOpenDefaultRM: status=%d\n",status);
 		return -1;
@@ -46,7 +46,7 @@ int FUN_MAIN(void)
 
 	number=Module.number;
 	
-	//´ò¿ªÐéÄâ×ÊÔ´  RsrcManager->bus_rsrc->rsrc_name
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´  RsrcManager->bus_rsrc->rsrc_name
 	//printf("RSRC NAME: %s\n", RsrcManager->module_rsrc->rsrc_name);
 	moudle=RsrcManager->module_rsrc;
 	while(i<number){
@@ -58,7 +58,7 @@ int FUN_MAIN(void)
 			printf("MfiOpen success : mfi=%d\n", mod_mfi[i]);
 
 
-		//×¢²áÊÂ¼þ´¦Àí»Øµ÷º¯Êý	
+		//×¢ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½	
 		if((status=MfiInstallHandler(mod_mfi[i], MFI_EVENT_IO_COMPLETION, test_handler, NULL))!=MFI_SUCCESS){
 			printf("ERROR: InstallHandler: status=%d\n",status);
 			return -1;
@@ -66,7 +66,7 @@ int FUN_MAIN(void)
 		else
 			printf("InstallHandler success!\n");
 	
-		//Ê¹ÄÜÒì²½IOÊÂ¼þ
+		//Ê¹ï¿½ï¿½ï¿½ì²½IOï¿½Â¼ï¿½
 		if((status=MfiEnableEvent(mod_mfi[i], MFI_EVENT_IO_COMPLETION, MFI_HNDLR))!=MFI_SUCCESS){
 			printf("ERROR: MfiEnableEvent: status=%d\n",status);
 			return -1;

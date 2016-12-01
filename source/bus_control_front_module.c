@@ -118,7 +118,7 @@ void putDataToModule(int ipNumber, char* pDataHead, int length){
 				busModuleSimulation[count].dataTailNode = temp;//设置新添加的节点为尾节点
 				busModuleSimulation[count].dataLength=1;
 			}
-			pthread_mutex_unlock(&(busModuleSimulation[count].lock));
+			// pthread_mutex_unlock(&(busModuleSimulation[count].lock));
 			temp=NULL;
 			return;//正常添加数据节点后，直接返回，表示结束本函数
 		}
@@ -254,6 +254,7 @@ int getModuleRegisterBuf(int ipNumber, char** gotRegisterBuf, unsigned int *bufL
 */
 int setModuleRegisterBuf(int ipNumber, char* RegisterBuf,  unsigned int bufLength){
 	int count = 0;
+	int i = 0;
 	while(count < usingModuleNumber){
 		if(ipNumber == busModuleSimulation[count].boardIP){
 			char* pRegisterBuf = (char *)malloc(bufLength);//分配四个字节用来存放属性值内容
@@ -334,11 +335,11 @@ void generateModuleTriggerSignal(){
 	int count = 0;
 	while(count < usingModuleNumber){
 		if(1 == busModuleSimulation[count].triggerNumber){//如果触发线1号存在，那就产生相应的用户信号
-			kill(0,SIGUSR1); //产生SIGUSR1信号
+			// kill(0,SIGUSR1); //产生SIGUSR1信号
 			TriggerSig1 = 1;
 		}
 		if(2 == busModuleSimulation[count].triggerNumber){//如果触发线2号存在，那就产生相应的用户信号
-			kill(0,SIGUSR2); //产生SIGUSR2信号
+			// kill(0,SIGUSR2); //产生SIGUSR2信号
 			TriggerSig2 = 1;
 		}
 		count++;
@@ -404,16 +405,6 @@ int getHostTime(){
 		}
 	}
 	return -1;
-}
-
-void syncClockTime(unsigned int clockTime ){
-	unsigned int synTime = clockTime;
-	if(synTime == 0){
-		//synchronize time of all modules to the host boardIP
-		synTime = getHostTime();
-	}
-	//synchronize time of all modules to the parameter
-	syncModulesTime(synTime);	
 }
 
 void syncModulesTime(unsigned int syncTime){

@@ -4,7 +4,7 @@
 #include <signal.h>
 
 extern int fd_gpmc,fd_uart;
-extern sigset_t mask;
+// extern sigset_t mask;
 
 void signal_f(int signum);
 int GPMC_OPEN(void);

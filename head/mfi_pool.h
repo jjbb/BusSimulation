@@ -5,20 +5,20 @@
 #include "mfiapi.h"
 
 #define DEF_MEM_PAGE    128
-#define MEM_F_SHARED    0x1                /* 标示对应的池允许共用 */
+#define MEM_F_SHARED    0x1                /* 锟斤拷示锟斤拷应锟侥筹拷锟斤拷锟斤拷锟斤拷锟斤拷 */
 
-/* 每个池的相关信息 */
+/* 每锟斤拷锟截碉拷锟斤拷锟斤拷锟斤拷息 */
 typedef struct pool_head {
-	void                     **free_list;     //空闲内存块链表，每个内存块的前四个字节存储下个存储块的地址
-  MfiUInt32                used;            /* how many chunks are currently in use 分配出去正在使用的块数量*/
-  MfiUInt32                allocated;        /* how many chunks have been allocated 已分配的块总数，包括正在使用和留在池中空闲两部分*/
-  MfiUInt32                limit;            /* hard limit on the number of chunks 最大分配数量限制,0为无限*/
-  MfiUInt32                minavail;        /* how many chunks are expected to be used 释放不必要块时，保留的合适的最小数量*/
+	void                     **free_list;     //锟斤拷锟斤拷锟节达拷锟斤拷锟斤拷锟斤拷锟斤拷每锟斤拷锟节达拷锟斤拷锟斤拷前锟侥革拷锟街节存储锟铰革拷锟芥储锟斤拷锟侥碉拷址
+  MfiUInt32                used;            /* how many chunks are currently in use 锟斤拷锟斤拷锟斤拷去锟斤拷锟斤拷使锟矫的匡拷锟斤拷锟斤拷*/
+  MfiUInt32                allocated;        /* how many chunks have been allocated 锟窖凤拷锟斤拷锟侥匡拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷使锟矫猴拷锟斤拷锟节筹拷锟叫匡拷锟斤拷锟斤拷锟斤拷锟斤拷*/
+  MfiUInt32                limit;            /* hard limit on the number of chunks 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷,0为锟斤拷锟斤拷*/
+  MfiUInt32                minavail;        /* how many chunks are expected to be used 锟酵放诧拷锟斤拷要锟斤拷时锟斤拷锟斤拷锟斤拷锟侥猴拷锟绞碉拷锟斤拷小锟斤拷锟斤拷*/
   MfiUInt32                size;            /* chunk size */
   MfiUInt32                flags;            /* MEM_F_* */
-//  MfiUInt32                users;            /* number of pools sharing this zone 记录正在使用某一尺寸池的用户数量*/
-  pthread_mutex_t       lock;
-  struct list_head         list;            //使用linux自带的list，组织所有大小类型的pool
+//  MfiUInt32                users;            /* number of pools sharing this zone 锟斤拷录锟斤拷锟斤拷使锟斤拷某一锟竭达拷锟截碉拷锟矫伙拷锟斤拷锟斤拷*/
+  // pthread_mutex_t       lock;
+  struct list_head         list;            //使锟斤拷linux锟皆达拷锟斤拷list锟斤拷锟斤拷织锟斤拷锟叫达拷小锟斤拷锟酵碉拷pool
 }pool_head,*pool_head_p;
 
 typedef struct mem_pools{
@@ -26,10 +26,10 @@ typedef struct mem_pools{
   MfiUInt32                minavail;        /* how many chunks are expected to be used */
   MfiUInt32                mempage;
 	struct list_head         pools;
-	pthread_rwlock_t         rwlock;
+	// pthread_rwlock_t         rwlock;
 }mem_pools,*mem_pools_p;
 
-/* 池创建 */
+/* 锟截达拷锟斤拷 */
 /* Try to find an existing shared pool with the same characteristics and
  * returns it, otherwise creates this one. NULL is returned if no memory
  * is available for a new creation.
@@ -37,7 +37,7 @@ typedef struct mem_pools{
 
 MfiStatus pool_create(mem_pools_p mpools, MfiUInt32 size, pool_head_p* pool_head_r);
 
-/* 池销毁 */
+/* 锟斤拷锟斤拷锟斤拷 */
 /*
  * This function destroys a pool by freeing it completely, unless it's still
  * in use. This should be called only under extreme circumstances. It always
@@ -46,13 +46,13 @@ MfiStatus pool_create(mem_pools_p mpools, MfiUInt32 size, pool_head_p* pool_head
  */
 extern void* pool_destroy(mem_pools_p mpools, pool_head_p pool);
 
-/* 把池中的空闲的元素都给释放掉 */
+/* 锟窖筹拷锟叫的匡拷锟叫碉拷元锟截讹拷锟斤拷锟酵放碉拷 */
 /*
  * This function frees whatever can be freed in pool <pool>.
  */
 extern void pool_clear(pool_head_p pool);
 
-/* 把池中非必要的元素给释放掉 */
+/* 锟窖筹拷锟叫非憋拷要锟斤拷元锟截革拷锟酵放碉拷 */
 /*
  * This function frees whatever can be freed in all pools, but respecting
  * the minimum thresholds imposed by owners. It takes care of avoiding
@@ -60,7 +60,7 @@ extern void pool_clear(pool_head_p pool);
  */
 extern void pool_flush_nonessential(mem_pools_p mpools);
 
-/* 动态分配一个 pool 元素大小的内存空间 */
+/* 锟斤拷态锟斤拷锟斤拷一锟斤拷 pool 元锟截达拷小锟斤拷锟节达拷锟秸硷拷 */
 /* Allocate a new entry for pool <pool>, and return it for immediate use.
  * NULL is returned if no memory is available for a new creation.
  */
@@ -72,7 +72,7 @@ extern void* pool_alloc(mem_pools_p mpools, pool_head_p pool);
  * first case, <pool_type> is updated to point to the
  * next element in the list.
  */
-//从池中获取块
+//锟接筹拷锟叫伙拷取锟斤拷
 
 /*#define pool_alloc(pool) \
 ({ \
@@ -97,7 +97,7 @@ extern void* pool_alloc(mem_pools_p mpools, pool_head_p pool);
  * is done if <ptr> is NULL.
 
  */
-//将一个块回收到池中
+//锟斤拷一锟斤拷锟斤拷锟斤拷锟秸碉拷锟斤拷锟斤拷
 int pool_free(pool_head_p pool, void *mem_chunk);
 /*#define pool_free(pool, ptr) \
 { \

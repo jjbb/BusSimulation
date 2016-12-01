@@ -3,26 +3,27 @@
 
 #include "mfiapi.h"
 
-//Ç°¶ËÄ£¿éµÄÐÅÏ¢
+//Ç°ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 typedef struct __Module_Info
 {
-	char mod_ip;      //¶¯Ì¬·ÖÅäµØÖ·
-	char mod_id[4];   //°å×Ó¹ÌÓÐÐÅÏ¢:module id
-	char manf_id[2];  //°å×Ó¹ÌÓÐÐÅÏ¢:manf id
-	char mod_resv1;   //±£Áô
-	char mod_resv2;   //±£Áô
+	char mod_ip;      //ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
+	char mod_id[4];   //ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:module id
+	char manf_id[2];  //ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:manf id
+	char mod_resv1;   //ï¿½ï¿½ï¿½ï¿½
+	char mod_resv2;   //ï¿½ï¿½ï¿½ï¿½
 }_Module_Info_t,*_Module_Info_p;
 
 typedef struct __Module
 {
 	_Module_Info_p     Module_Info_p;
-	MfiUInt32          Available_flag; //Í¨ÐÅÁ´Â·Í¨³©µÄÄ£¿é±ê¼Ç
-	MfiUInt32          number;   //Ä£¿éÊýÁ¿
+	MfiUInt32          Available_flag; //Í¨ï¿½ï¿½ï¿½ï¿½Â·Í¨ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	MfiUInt32          number;   //Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }Module_t,*Module_p;
 
 extern Module_t Module;
 
-void Module_Useful_check(void);
+// void Module_Useful_check(void);
+void initModuelInfo();
 MfiUInt32 Module_IP_Find(MfiUInt32 mod_mac);
 
 #endif
