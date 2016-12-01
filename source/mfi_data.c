@@ -1,0 +1,616 @@
+#include "mfi_data.h"
+#include "mfiapi.h"
+#include "mfi_pool.h"
+#include "mfi_message.h"
+#include "mfi_rsrc_manager.h"
+#include "mfi_test_define.h"
+#include "mfi_system_command.h"
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+
+mem_pools DataSendPool;
+mem_pools DataRecPool;
+
+DATA_Fifo dataRxFifo;
+DATA_Fifo dataTxFifo;
+CombData_Fifo dataCombFifo;
+
+/*数据FIFO初始化函数*/
+MfiStatus DataFifo_Init(DATA_Fifo* Data_Fifo_p)
+{
+	memset(Data_Fifo_p,0,sizeof(DATA_Fifo));
+	
+	if(pthread_mutex_init(&(Data_Fifo_p->lock),MFI_NULL)!=0)
+		return MFI_ERROR_SYSTEM_ERROR;
+	
+	if(pthread_cond_init(&(Data_Fifo_p->ready),MFI_NULL)!=0){
+		pthread_mutex_destroy(&(Data_Fifo_p->lock));
+		return MFI_ERROR_SYSTEM_ERROR;
+	}
+	
+	Data_Fifo_p->head.next=&(Data_Fifo_p->head);
+	Data_Fifo_p->head.last=&(Data_Fifo_p->head);
+	Data_Fifo_p->tail=&(Data_Fifo_p->head);
+		
+	Data_Fifo_p->Data_Fifo_MaxLen  = DATA_FIFO_DEF_LEN;
+	Data_Fifo_p->Tmp_Fifo_MaxLen   = DATA_TMP_FIFO_DEF_LEN;
+	
+	return MFI_SUCCESS;
+}
+
+MfiStatus DataFifo_Delete(DATA_Fifo* Data_Fifo_p)
+{
+	int i=0;
+	pool_head_p pool=NULL;
+	DATA_p data;
+	
+	pool_create(&DataSendPool, sizeof(DATA), &pool);
+	pthread_mutex_lock(&(Data_Fifo_p->lock));
+	for(;i<Data_Fifo_p->Data_Fifo_Len;++i){
+		Data_Fifo_p->tail=Data_Fifo_p->tail->last;
+		pool_free(pool, Data_Fifo_p->tail->next);
+	}
+	for(i=0;i<SESSION_MAX_NUM;i++)
+	{
+		if(Data_Fifo_p->tmpHead[i]!=NULL){
+			while(Data_Fifo_p->tmpHead[i]!=Data_Fifo_p->tmpTail[i]){
+				data=Data_Fifo_p->tmpHead[i];
+				Data_Fifo_p->tmpHead[i]=data->next;
+				pool_free(pool, data);
+			}
+			pool_free(pool, Data_Fifo_p->tmpHead[i]);
+		}
+	}
+	
+	pthread_cond_destroy(&(Data_Fifo_p->ready));
+	pthread_mutex_destroy(&(Data_Fifo_p->lock));
+	
+	memset(Data_Fifo_p,0,sizeof(DATA_Fifo));
+	
+	return MFI_SUCCESS;
+}
+
+pthread_mutex_t DPFreamData_lock=PTHREAD_MUTEX_INITIALIZER;
+
+//分帧函数
+//当组帧模块调用该函数发送重传数据时，数据发送线程取出该数据判断到是重传数据时，
+//从暂存fifo取出待重传数据，并设置重传位
+//注意！！！！可考虑在分帧函数中对函数pool_create(&DataSendPool, sizeof(DATA), &pool)只调用一次，将pool设置为静态变量
+MfiStatus DecmposeFreamData(MfiUInt32 dst_ip, DATA_Fifo* Data_Fifo_p, MfiUInt32 priorty, MfiUInt32 dataclass, MfiUInt32 datatype, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 flag)
+{
+	DID_BITS dataid={0};
+	DATA_p data=NULL;
+	pool_head_p pool=NULL;
+	int i=1;
+	MfiUInt32 real_len=0,fream_num=0;
+	
+	dataid.d_src_addr=HOST_IP;
+	dataid.d_dst_addr=dst_ip;
+	dataid.d_type=datatype;
+	dataid.priority2=priorty>>2;
+	dataid.priority1=priorty>>1;
+	dataid.priority0=priorty;
+	dataid.d_class3=dataclass>>3;
+	dataid.d_class2=dataclass>>2;
+	dataid.d_class1=dataclass>>1;
+	dataid.d_class0=dataclass;
+	
+	//长度<=DATA_MAX_LEN-4,单帧
+	if(retCnt<=DATA_MAX_LEN-4){
+		dataid.d_single=0;
+		
+		//分配内存
+		pool_create(&DataSendPool, sizeof(DATA), &pool);
+		data=(DATA_p)pool_alloc(&DataSendPool, pool);
+		//将数据存入新空间
+		data->d_id.bit=dataid;
+		((MfiPUInt16)data->d_char)[0]=retCnt;
+		if(flag==0){
+			((MfiPUInt16)data->d_char)[1]=Data_Fifo_p->number[dst_ip]++;
+			Data_Fifo_p->number[dst_ip]%=(Data_Fifo_p->Tmp_Fifo_MaxLen-1);
+		}
+		else if(flag==1)
+			((MfiPUInt16)data->d_char)[1]=DATA_TMP_FIFO_DEF_LEN-1;  //固定时间窗数据，不编号
+		else if(flag==2)
+			((MfiPUInt16)data->d_char)[1]=DATA_TMP_FIFO_DEF_LEN; 
+			
+		memcpy(&(data->d_char[4]),buf,retCnt);
+		
+		pthread_mutex_lock(&(Data_Fifo_p->lock));
+		while(Data_Fifo_p->Data_Fifo_Len>=Data_Fifo_p->Data_Fifo_MaxLen)
+			pthread_cond_wait(&(Data_Fifo_p->ready),&(Data_Fifo_p->lock));
+		//入队
+		data->next=Data_Fifo_p->tail->next;
+		data->last=Data_Fifo_p->tail;
+		data->next->last=data;
+		data->last->next=data;
+		Data_Fifo_p->tail=data;
+		Data_Fifo_p->Data_Fifo_Len++;
+		pthread_mutex_unlock(&(Data_Fifo_p->lock));
+		
+		return MFI_SUCCESS;
+	}
+	
+	real_len=DATA_MAX_LEN-8;//发送连续帧时，一帧的实际长度
+	fream_num=(retCnt+real_len-1)/real_len;
+	
+	i=1;
+	dataid.d_single=1;
+	pool_create(&DataSendPool, sizeof(DATA), &pool);
+	while(retCnt>0){
+		//分配内存	
+		data=(DATA_p)pool_alloc(&DataSendPool, pool);
+		//将数据存入新空间
+		data->d_id.bit=dataid;
+		((MfiPUInt16)data->d_char)[0]=(retCnt>real_len?real_len:retCnt);
+			
+		if(flag==0){
+			((MfiPUInt16)data->d_char)[1]=Data_Fifo_p->number[dst_ip]++;
+			Data_Fifo_p->number[dst_ip]%=(Data_Fifo_p->Tmp_Fifo_MaxLen-1);
+		}
+		else if(flag==1)
+			((MfiPUInt16)data->d_char)[1]=DATA_TMP_FIFO_DEF_LEN-1;  //固定时间窗数据，不编号
+		else if(flag==2)
+			((MfiPUInt16)data->d_char)[1]=DATA_TMP_FIFO_DEF_LEN;  //不编号
+			
+		((MfiPUInt16)data->d_char)[2]=i;
+		((MfiPUInt16)data->d_char)[3]=fream_num;
+		memcpy(&(data->d_char[8]),buf,((MfiPUInt16)data->d_char)[0]);
+		buf+=((MfiPUInt16)data->d_char)[0];
+		
+		pthread_mutex_lock(&(Data_Fifo_p->lock));
+		while(Data_Fifo_p->Data_Fifo_Len>=Data_Fifo_p->Data_Fifo_MaxLen)
+			pthread_cond_wait(&(Data_Fifo_p->ready),&(Data_Fifo_p->lock));
+		//入队
+		data->next=Data_Fifo_p->tail->next;
+		data->last=Data_Fifo_p->tail;
+		data->next->last=data;
+		data->last->next=data;
+		Data_Fifo_p->tail=data;
+		Data_Fifo_p->Data_Fifo_Len++;
+		pthread_mutex_unlock(&(Data_Fifo_p->lock));
+		
+		retCnt-=((MfiPUInt16)data->d_char)[0];
+		++i;
+	}
+	
+	return MFI_SUCCESS;
+}
+
+MfiStatus DataSendToBus(DATA_Fifo* Data_Fifo_p)
+{
+	MfiUInt32 dst_ip=0,num=0,endnum=0;;
+	MfiUInt32 dataclass=0;
+	DATA_p data,tmpdata;
+	pool_head_p pool=NULL;
+	
+	#ifdef ALL_TEST
+	printf("DataSendToBus!\n");
+	#endif
+	
+	pthread_mutex_lock(&(Data_Fifo_p->lock));
+	if(Data_Fifo_p->Data_Fifo_Len==0){
+		pthread_mutex_unlock(&(Data_Fifo_p->lock));
+		#ifdef ALL_TEST
+		printf("DataSendToBus: fifo empty!\n");
+		#endif
+		return MFI_SUCCESS;
+	}
+	//数据发送队列中取出一帧数据
+	data=Data_Fifo_p->head.next;
+	Data_Fifo_p->head.next=data->next;
+	data->next->last=data->last;
+	if(data==Data_Fifo_p->tail)
+		Data_Fifo_p->tail=data->last;
+	Data_Fifo_p->Data_Fifo_Len--;
+	
+	pthread_cond_signal(&(Data_Fifo_p->ready));
+	pthread_mutex_unlock(&(Data_Fifo_p->lock));
+	
+	dst_ip=data->d_id.bit.d_dst_addr;
+	if(((MfiPUInt16)data->d_char)[1] < DATA_TMP_FIFO_DEF_LEN-1){
+		//正常编号，需发送到总线需存入暂存fifo
+		if(Data_Fifo_p->tmplen[dst_ip]>=Data_Fifo_p->Tmp_Fifo_MaxLen){
+			//暂存fifo满
+			tmpdata=Data_Fifo_p->tmpHead[dst_ip];
+			Data_Fifo_p->tmpHead[dst_ip]=tmpdata->next;
+			Data_Fifo_p->tmpTail[dst_ip]->next=data;
+			Data_Fifo_p->tmpTail[dst_ip]=data;
+			data->next=Data_Fifo_p->tmpHead[dst_ip];
+  	
+			//释放tmpdata
+			pool_create(&DataSendPool, sizeof(DATA), &pool);
+			pool_free(pool, tmpdata);
+		}
+		else if(Data_Fifo_p->tmplen[dst_ip]>0){
+			//fifo有数，且非满
+			Data_Fifo_p->tmpTail[dst_ip]->next=data;
+			Data_Fifo_p->tmpTail[dst_ip]=data;
+			data->next=Data_Fifo_p->tmpHead[dst_ip];
+			Data_Fifo_p->tmplen[dst_ip]++;
+		}
+		else{
+			//暂存fifo为空
+			Data_Fifo_p->tmpHead[dst_ip]=data;
+			Data_Fifo_p->tmpTail[dst_ip]=data;
+			data->next=Data_Fifo_p->tmpHead[dst_ip];
+			Data_Fifo_p->tmplen[dst_ip]=1;
+		}
+		
+	}
+	else{
+		//不编号数据，包括：组帧模块发过来的重发通知；固定时间窗数据；广播数据
+		dataclass=data->d_id.bit.d_class0|data->d_id.bit.d_class1<<1|data->d_id.bit.d_class2<<2|data->d_id.bit.d_class3<<3;
+		//判断是否为组帧模块发过来的重发通知 ！！！注意：后续改为正确的class和type
+		if(((MfiPUInt16)data->d_char)[1]==DATA_TMP_FIFO_DEF_LEN && dataclass==URGENT_ORDER_CLASS && data->d_id.bit.d_type==RETRANS_APPLY_IN)
+		{
+			//该消息的第一个消息位置存放了待重发编号，更新待发送消息的编号
+			num=((MfiPUInt16)data->d_char)[2];
+			endnum=((MfiPUInt16)data->d_char)[3];
+			//释放data
+			pool_create(&DataSendPool, sizeof(DATA), &pool);
+			pool_free(pool, data);
+			//暂存队列中查找num
+			data=Data_Fifo_p->tmpHead[dst_ip];
+			while(data!=Data_Fifo_p->tmpTail[dst_ip] && ((MfiPUInt16)data->d_char)[1]!=num){
+				data=data->next;
+			}
+			//未找到申请重发的编号的数据
+			if(((MfiPUInt16)data->d_char)[1]!=num)
+				return MFI_SUCCESS;
+			
+			while(num!=endnum){
+				data->d_id.bit.d_retry=1; //标记重发
+				num=(num+1)%(DATA_TMP_FIFO_DEF_LEN-1);
+				
+				//调用总线驱动接口，将数据发送到FPGA
+				
+				
+				data=data->next;
+			}
+			
+			return MFI_SUCCESS;
+		}
+		else if(((MfiPUInt16)data->d_char)[1]==DATA_TMP_FIFO_DEF_LEN-1){
+			//调用总线驱动接口，将数据发送到FPGA中固定时间窗相关寄存器
+		
+			pool_create(&DataSendPool, sizeof(DATA), &pool);
+			pool_free(pool, data);
+			return MFI_SUCCESS;
+		}
+
+	}
+
+	//调用总线驱动接口，将消息发送到FPGA
+	
+	return MFI_SUCCESS;
+}
+
+MfiStatus DataReadFromBus(DATA_Fifo* Data_Fifo_p)
+{
+	DATA_p data;
+	pool_head_p pool=NULL;
+	
+	pthread_mutex_lock(&(Data_Fifo_p->lock));
+	
+	if(Data_Fifo_p->Data_Fifo_Len>=Data_Fifo_p->Data_Fifo_MaxLen){
+		//接收FIFO已满，直接解锁，并丢弃数据
+		pthread_mutex_unlock(&(Data_Fifo_p->lock));
+		//清除标记，丢弃该帧数据
+		
+		return MFI_ERROR_BUF_FULL;
+	}
+	pthread_mutex_unlock(&(Data_Fifo_p->lock));
+	
+	pool_create(&DataRecPool, sizeof(DATA), &pool);
+	data=(DATA_p)pool_alloc(&DataRecPool, pool);
+	
+	//调用总线驱动接口，从FPGA接收数据，存入data
+	//可能需要CRC等
+	
+	pthread_mutex_lock(&(Data_Fifo_p->lock));
+	//入队
+	data->next=Data_Fifo_p->tail->next;
+	data->last=Data_Fifo_p->tail;
+	data->next->last=data;
+	data->last->next=data;
+	Data_Fifo_p->tail=data;
+	Data_Fifo_p->Data_Fifo_Len++;
+	pthread_mutex_unlock(&(Data_Fifo_p->lock));
+	
+	return MFI_SUCCESS;
+}
+
+/*数据组帧FIFO初始化函数*/
+MfiStatus CombData_Fifo_Init(CombData_Fifo_p pointer)
+{
+	memset(pointer,0,sizeof(CombData_Fifo));
+	
+	pointer->queue_len=0;
+	pointer->head.next=NULL;
+	
+	return MFI_SUCCESS;
+}
+
+//组帧函数
+//功能：从接收数据队列取出数据，检查错误，组帧，并分配到各个会话或者对错误做相应处理
+//      函数中使用的有关数据的帧头、有效长度、帧位等信息，参看数据帧头定义以及内容定义
+MfiStatus CombineFreamData(MfiSession Mfi, DATA_Fifo* Data_Fifo_p, CombData_Fifo* CombData_Fifo_p)
+{
+	MfiUInt32 src_ip=0,num=0,cnt=0;
+	MfiUInt32 dataclass=0;
+	DATA_p data;
+	pool_head_p pool=NULL;
+	CombData_Head_p combData=NULL,temp=&(CombData_Fifo_p->head);
+	CombData_Head_p target=NULL,tgtmp=NULL;
+	int i=0,flag=0;
+	MfiByte* src_addr=NULL,freampos=0,freamnum=0;
+	MfiSession des_mfi;
+	MfiUInt16 buf[2];
+	MfiStatus status;
+	
+	//取出一帧数据
+	pthread_mutex_lock(&(Data_Fifo_p->lock));
+	if(Data_Fifo_p->Data_Fifo_Len==0){
+		pthread_mutex_unlock(&(Data_Fifo_p->lock));
+		return MFI_SUCCESS;
+	}
+	
+	data=Data_Fifo_p->head.next;
+	Data_Fifo_p->head.next=data->next;
+	data->next->last=data->last;
+	if(data==Data_Fifo_p->tail)
+		Data_Fifo_p->tail=data->last;
+	Data_Fifo_p->Data_Fifo_Len--;
+	
+	pthread_mutex_unlock(&(Data_Fifo_p->lock));
+	
+	//判断编号是否正确
+	src_ip=data->d_id.bit.d_src_addr;
+	num=((MfiPUInt16)data->d_char)[1];
+	if(num<DATA_TMP_FIFO_DEF_LEN-1 && num!=Data_Fifo_p->number[src_ip]){
+		if(data->d_id.bit.d_retry!=1){
+			//数据丢失，发送申请重发数据，重发数据内容为Data_Fifo_p->number[src_ip]到num之间的编号
+			//可针对错误处理建立一个专门的处理模块，放在一个线程里面运行，采用生产者消费者模型，
+			//组帧模块仅仅往其中丢入错误指令，由错误处理模块来争夺分帧模块，发送重发申请等消息
+			buf[0]=Data_Fifo_p->number[src_ip];
+			buf[0]=num;
+			
+			pthread_mutex_lock(&DPFreamData_lock);
+			DecmposeFreamData(src_ip, &dataTxFifo, URGENT_ORDER_DEF_PORITY, URGENT_ORDER_CLASS, RETRANS_APPLY_OUT, (MfiPBuf)buf, 4,0);
+			pthread_mutex_unlock(&DPFreamData_lock);//释放锁1
+			
+			Data_Fifo_p->number[src_ip]=num+1;	 //renew the num
+			Data_Fifo_p->number[src_ip]%=DATA_TMP_FIFO_DEF_LEN-1;//最大编号DATA_TMP_FIFO_DEF_LEN-2
+		}
+	}
+	else if(num<DATA_TMP_FIFO_DEF_LEN-1){
+		Data_Fifo_p->number[src_ip]++;
+		Data_Fifo_p->number[src_ip]%=DATA_TMP_FIFO_DEF_LEN-1;//最大编号DATA_TMP_FIFO_DEF_LEN-2
+	}
+	
+	//单帧
+	if(data->d_id.bit.d_single==0){
+		dataclass=data->d_id.bit.d_class0|data->d_id.bit.d_class1<<1|data->d_id.bit.d_class2<<2|data->d_id.bit.d_class3<<3;
+		//判断是否为发送端发来的申请重发消息！！！注意：后续改为正确的class和type
+		if(dataclass==URGENT_ORDER_CLASS && data->d_id.bit.d_type==RETRANS_APPLY_OUT)
+		{
+			//向检测A发送申请重发内部数据
+			pthread_mutex_lock(&DPFreamData_lock);
+			DecmposeFreamData(src_ip, &dataTxFifo, URGENT_ORDER_DEF_PORITY, URGENT_ORDER_CLASS, RETRANS_APPLY_IN, &(data->d_char[4]), 4,2);
+			pthread_mutex_unlock(&DPFreamData_lock);//释放锁1
+			
+			pool_create(&DataRecPool, sizeof(DATA), &pool);
+			pool_free(pool, data);
+			
+			return MFI_SUCCESS;
+		}
+		
+		//！此处待补充：src_ip转会话id des_mfi
+		Ip_to_Mfi(src_ip,&des_mfi);
+		status=MFI_SUCCESS;
+		
+		//判断会话是否已经关闭（是否在正常使用中）
+		if((RsrcManager!=NULL)&&(SesStatusCheck(&(RsrcManager->session_list[des_mfi]))==INUSE)){
+			
+			//申请内存，转存数据
+			pool_create(&DataRecPool, sizeof(CombData_Head)+((MfiPUInt16)data->d_char)[0], &pool);
+			combData=(CombData_Head_p)pool_alloc(&DataRecPool, pool);
+			memcpy(combData+1,data->d_char+4,((MfiPUInt16)data->d_char)[0]);
+			combData->memsize=pool->size;
+			combData->d_id.all=data->d_id.all;
+			combData->len=((MfiPUInt16)data->d_char)[0];
+			
+			//！数据存入会话的数据fifo或者根据数据大类存入总线的会话
+			//根据数据大类分类，应用数据类存入数据fifo，其他类型归属总线资源会话数据fifo
+			if(dataclass==APP_DATA_CLASS){
+				status=SesDataFifoWrite(&(RsrcManager->session_list[des_mfi].data_rfifo), combData);
+			}
+			else{
+				status=SesDataFifoWrite(&(RsrcManager->session_list[RsrcManager->bus_rsrc->session].data_rfifo), combData);
+			}
+			
+			SesStatusFree(&(RsrcManager->session_list[des_mfi]));
+		}
+		
+		if(status!=MFI_SUCCESS){
+			pool_create(&DataRecPool, combData->memsize, &pool);
+			pool_free(pool, combData);
+		}
+		
+		pool_create(&DataRecPool, sizeof(DATA), &pool);
+		pool_free(pool, data);
+		 
+		return status;
+	}
+	
+	//连续帧
+	data->d_id.bit.d_retry=0;
+	if(num < DATA_TMP_FIFO_DEF_LEN-1)
+	{
+		for(i=0;i<CombData_Fifo_p->queue_len;++i){
+			combData=temp->next;
+			if(combData->startnum>=DATA_TMP_FIFO_DEF_LEN-1 || combData->d_id.all!=data->d_id.all || ((combData->startnum+combData->freamnum)%(DATA_TMP_FIFO_DEF_LEN-1))<=num){
+				combData->time--;
+				//超时，丢弃，回收内存
+				if(combData->time==0){
+					temp->next=combData->next;
+					pool_create(&DataRecPool, combData->memsize, &pool);
+					pool_free(pool, combData);
+					++cnt;
+				}
+				else
+					temp=combData;
+			}
+			else{
+				flag=1;
+				target=combData;
+				tgtmp=temp;
+				temp=combData;
+			}
+		}
+	}
+	else
+	{
+		for(i=0;i<CombData_Fifo_p->queue_len;++i){
+			combData=temp->next;
+			if(combData->startnum<DATA_TMP_FIFO_DEF_LEN-1 || combData->d_id.all!=data->d_id.all){
+				combData->time--;
+				//超时，丢弃，回收内存
+				if(combData->time==0){
+					temp->next=combData->next;
+					pool_create(&DataRecPool, combData->memsize, &pool);
+					pool_free(pool, combData);
+					++cnt;
+				}
+				else
+					temp=combData;
+			}
+			else if(combData->cnt + ((MfiPUInt16)data->d_char)[2] != (combData->freamnum + 1)){
+					temp->next=combData->next;
+					pool_create(&DataRecPool, combData->memsize, &pool);
+					pool_free(pool, combData);
+					++cnt;				
+			}
+			else{
+				flag=1;
+				target=combData;
+				tgtmp=temp;
+				temp=combData;
+			}
+		}
+	}
+	
+	CombData_Fifo_p->queue_len-=cnt;
+	if(flag==1){
+		freampos=((MfiPUInt16)data->d_char)[2]-1;
+		src_addr=(MfiByte*)(target+1)+freampos*(DATA_MAX_LEN-8);
+		memcpy(src_addr,data->d_char+8,((MfiPUInt16)data->d_char)[0]);
+		target->cnt--;
+		target->len+=((MfiPUInt16)data->d_char)[0];
+		
+		pool_create(&DataRecPool, sizeof(DATA), &pool);
+		pool_free(pool, data);
+		
+		if(target->cnt==1){
+			tgtmp->next=target->next;
+			CombData_Fifo_p->queue_len--;
+			
+			//！src_ip转会话id des_mfi
+			Ip_to_Mfi(src_ip,&des_mfi);
+		
+			//判断会话是否已经关闭（是否在正常使用中）
+			if((RsrcManager!=NULL)&&(SesStatusCheck(&(RsrcManager->session_list[des_mfi]))==INUSE))
+			{
+				status=MFI_SUCCESS;
+				dataclass=data->d_id.bit.d_class0|data->d_id.bit.d_class1<<1|data->d_id.bit.d_class2<<2|data->d_id.bit.d_class3<<3;
+				//！此处需要补充：数据存入会话的数据fifo或者根据数据大类存入总线的会话
+				//根据数据大类分类，应用数据类存入数据fifo，其他类型归属总线资源会话数据fifo
+				if(dataclass==APP_DATA_CLASS){
+					status=SesDataFifoWrite(&(RsrcManager->session_list[des_mfi].data_rfifo), target);
+				}
+				else{
+					status=SesDataFifoWrite(&(RsrcManager->session_list[RsrcManager->bus_rsrc->session].data_rfifo), target);
+				}
+				
+				SesStatusFree(&(RsrcManager->session_list[des_mfi]));
+				
+				if(status!=MFI_SUCCESS){
+					pool_create(&DataRecPool, target->memsize, &pool);
+					pool_free(pool, target);
+				}
+				
+				return status;
+			}
+			
+			pool_create(&DataRecPool,target->memsize, &pool);
+			pool_free(pool, target);
+		}
+
+		return MFI_SUCCESS;
+	}
+	else{
+		//分配内存、存入队列
+		freamnum=((MfiPUInt16)data->d_char)[3];
+		freampos=((MfiPUInt16)data->d_char)[2]-1;
+		
+		if(num>=(DATA_TMP_FIFO_DEF_LEN-1) && freampos!=0)
+			goto point;
+			
+		pool_create(&DataRecPool, sizeof(CombData_Head)+freamnum*(DATA_MAX_LEN-8), &pool);
+		combData=(CombData_Head_p)pool_alloc(&DataRecPool, pool);
+		src_addr=(MfiByte*)(combData+1)+freampos*(DATA_MAX_LEN-8);
+		memcpy(src_addr,data->d_char+8,((MfiPUInt16)data->d_char)[0]);
+		combData->memsize=pool->size;
+		combData->time=COMBDATA_KEEP_TIME;
+		combData->d_id.all=data->d_id.all;
+		combData->freamnum=freamnum;
+		combData->startnum=num-freampos;
+		combData->cnt=freamnum;
+		combData->len=((MfiPUInt16)data->d_char)[0];
+		
+		combData->next=CombData_Fifo_p->head.next;
+		CombData_Fifo_p->head.next=combData;
+		CombData_Fifo_p->queue_len++;
+		
+		point:
+		pool_create(&DataRecPool, sizeof(DATA), &pool);
+		pool_free(pool, data);
+	}
+
+	return MFI_SUCCESS;
+}
+
+MfiStatus MfiCombDataFree(MfiByte* buf)
+{
+	MfiUInt16 memsize=0;
+	pool_head_p pool=NULL;
+	CombData_Head_p combData=NULL;
+	
+	combData=(CombData_Head_p)buf-1;
+	memsize=combData->memsize;
+	memset(combData,0,memsize);
+	pool_create(&DataRecPool, memsize, &pool);
+	if(pool_free(pool, combData)==-1){
+		free(combData);
+	}
+	return MFI_SUCCESS;
+}
+
+MfiStatus CombDataChange(CombData_Head_p combData, MfiPUInt32 dataclass, MfiPUInt32 datatype, MfiPUInt32 datasrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt)
+{
+	if(dataclass!=NULL)
+		*dataclass=combData->d_id.bit.d_class0|combData->d_id.bit.d_class1<<1|combData->d_id.bit.d_class2<<2|combData->d_id.bit.d_class3<<3;
+		
+	if(datatype!=NULL)
+		*datatype=combData->d_id.bit.d_type;
+		
+	if(datasrcaddr!=NULL)
+		*datasrcaddr=combData->d_id.bit.d_src_addr;
+	
+	*bufp=(MfiPBuf)(combData+1);
+	*retCnt=combData->len;
+	
+	return MFI_SUCCESS;
+}

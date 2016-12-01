@@ -1,0 +1,9 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "command": "gcc",
+    "isShellCommand": true,
+    "args": ["-I", "./head", "-g", "-o", "test", "./source/main.c", "./source/bus_control_datatype.c", "./source/bus_control_front_module.c", "./source/BusControlSimulation4Lin.c", "./source/mfi_module_info.c"],
+    "showOutput": "always"
+}

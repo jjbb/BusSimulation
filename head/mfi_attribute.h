@@ -1,0 +1,57 @@
+#ifndef _MFI_ATTRIBUTE_HEADER_
+#define _MFI_ATTRIBUTE_HEADER_
+
+#include "mfi_define.h"
+#include "mfiapi.h"
+
+typedef struct{
+	MfiUInt32 is_ro       : 1;  //属性是否只读
+	MfiUInt32 is_hdw      : 1;  //是否与硬件相关
+	MfiUInt32 is_rt       : 1;  //是否实时更新
+	MfiUInt32 type        : 2;  //属性类型(0:整形 1:字符串)
+	MfiUInt32 reserved    :27;
+}MfiAttrCfg_bit;
+
+typedef union{
+	MfiUInt32 all;
+	MfiAttrCfg_bit bit;
+}MfiAttrConfig;
+
+typedef union{
+	MfiUInt32 attr_ui;
+	MfiInt32  attr_i;
+	MfiString attr_s;
+}MfiAttrVal;
+
+typedef struct{
+	MfiAttr attr_id;
+	MfiAttrVal attr_val;
+}MfiAttribute,*MfiPAttribute;
+
+typedef struct{
+	MfiAttr attr_id;
+	MfiAttrConfig attr_cfg;
+	MfiAttrVal def_val;
+	MfiAttrVal max_val;
+	MfiAttrVal min_val;
+	MfiAttrVal other_val[ATTR_OTHER_VALUE];
+	MfiCommand get_command;
+	MfiCommand set_command;
+	MfiStatus (*SetAttr)(MfiObject Mfi, MfiAttr attrName, MfiAttrState attrValue, MfiPAttribute attr, MfiInt32 attrindex, MfiUInt32 attr_num, MfiUInt16 refresh);
+	MfiStatus (*GetAttr)(MfiObject Mfi, MfiPAttribute attr, MfiUInt32 attr_num, MfiPBuf buf, MfiUInt32 retCnt);
+}MfiStaticAttrTable,* MfiPStaticAttrTable;
+
+extern MfiStaticAttrTable attr_table[];
+extern MfiAttribute ModuleRsrcAttr[MODULE_RSRC_ATTR_NUM];
+extern MfiAttribute BusRsrcAttr[BUS_RSRC_ATTR_NUM];
+extern MfiAttribute RMAttr[RM_ATTR_NUM];
+extern MfiAttribute AsyncIOEventAttr[ASYNC_EVENT_ATTR_NUM];
+
+MfiStatus RsrcGetAttribute(MfiObject Mfi, MfiAttr attrName, void * attrValue, MfiUInt16 refresh);
+MfiStatus RsrcSetAttribute(MfiObject Mfi, MfiAttr attrName, MfiAttrState attrValue, MfiUInt16 refresh);
+void AttrInit(MfiPAttribute base, MfiUInt32 num);
+MfiInt32 FindAttr(MfiAttr attr_id, MfiPAttribute base, MfiUInt32 num);
+void AttrFree(MfiPAttribute base, MfiUInt32 num);
+MfiStatus RsrcNameCreate(MfiString rsrcType,MfiUInt16 manfId,MfiUInt32 modId,MfiString* name);
+
+#endif

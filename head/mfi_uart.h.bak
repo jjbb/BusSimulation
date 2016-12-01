@@ -1,0 +1,23 @@
+#ifndef _MFI_UART_HEADER_
+#define _MFI_UART_HEADER_
+
+#include "mfiapi.h"
+
+#define TEST_COMMAND 0x03
+#define GET_ID_COMMAND 0x02
+
+#define REQUEST_ID_COMMAND 0xC1
+#define REQUEST_RESEND_COMMAND 0xF1
+
+extern char uart_rx_buff[300];
+extern char uart_tx_buff[300];
+
+void Uart_Speed_Set(int fd, int speed);
+MfiBoolean Uart_Parity_Set(int fd, int databits, int stopbits, char parity);
+int tread(int fd, char *buf, unsigned int nbytes, unsigned int sectimout, unsigned int usectimout);
+int treadn(int fd, char *buf, unsigned int nbytes, unsigned int sectimout, unsigned int usectimout);
+void Uart_Rx_Options(int fd, char *buf, unsigned int sectimout, unsigned int usectimout);
+int Uart_Command_Analyze(char command,int length,char* buf);
+int writen(int fd, char *buf, unsigned int nbytes);
+
+#endif

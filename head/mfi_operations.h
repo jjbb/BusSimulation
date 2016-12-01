@@ -1,0 +1,44 @@
+#ifndef _MFI_OPERATIONS_HEAD_
+#define _MFI_OPERATIONS_HEAD_
+
+#include "mfiapi.h"
+
+typedef struct{
+	MfiStatus (*FindRsrc)(MfiString expr, MfiPFindList Mfi, MfiPUInt32 retCnt, MfiChar desc[]);
+	MfiStatus (*FindNext)(MfiFindList Mfi, MfiChar desc[]);
+	MfiStatus (*ParseRsrc)(MfiRsrc rsrcName,MfiPUInt16 intfType, MfiPUInt16 intfNum);
+	MfiStatus (*Open)(MfiRsrc name, MfiPSession Mfi);
+	MfiStatus (*Close)(MfiObject Mfi);
+	MfiStatus (*SetAttribute)(MfiObject Mfi, MfiAttr attrName, MfiAttrState attrValue, MfiUInt16 refresh);
+	MfiStatus (*GetAttribute)(MfiObject Mfi, MfiAttr attrName, void * attrValue, MfiUInt16 refresh);
+	MfiStatus (*StatusDesc)(MfiStatus status, MfiChar desc[]);
+	MfiStatus (*Terminate)(MfiUInt16 degree, MfiJobId jobId);
+	MfiStatus (*EnableEvent)(MfiSession Mfi, MfiEventType eventType, MfiUInt16 mechanism);
+	MfiStatus (*DisableEvent)(MfiSession Mfi, MfiEventType eventType);
+	MfiStatus (*DiscardEvents)(MfiSession Mfi, MfiEventType eventType, MfiUInt16 mechanism);
+	MfiStatus (*WaitOnEvent)(MfiSession Mfi, MfiEventType inEventType, MfiUInt32 timeout,MfiPEventType outEventType, MfiPEvent outContext);
+	MfiStatus (*InstallHandler)(MfiSession Mfi, MfiEventType eventType, MfiHndlr handler,MfiAddr userHandle);
+	MfiStatus (*UninstallHandler)(MfiSession Mfi, MfiEventType eventType, MfiHndlr handler,MfiAddr userHandle);
+	MfiStatus (*ReadMsg)(MfiSession Mfi, MfiPUInt32 msgtype, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiUInt32 timeout);
+	MfiStatus (*ReadMsgAsync)(MfiSession Mfi, MfiPUInt32 msgtype, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiPJobId jobId);
+	MfiStatus (*ReadData)(MfiSession Mfi, MfiPUInt32 datatype, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiUInt32 timeout);
+	MfiStatus (*ReadDataAsync)(MfiSession Mfi, MfiPUInt32 datatype, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiPJobId jobId);
+	MfiStatus (*WriteMsg)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 msgtype, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 timeout, MfiUInt32 sendtype);
+	MfiStatus (*WriteMsgAsync)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 msgtype, MfiPBuf buf, MfiUInt32 retCnt, MfiPJobId  jobId);
+	MfiStatus (*WriteData)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 datatype, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 timeout, MfiUInt32 sendtype);
+	MfiStatus (*WriteDataAsync)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 datatype, MfiPBuf buf, MfiUInt32 retCnt, MfiPJobId  jobId);
+	MfiStatus (*SysReadMsg)(MfiSession Mfi, MfiPUInt32 msgclass, MfiPUInt32 msgtype, MfiPUInt32 msgsrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiUInt32 timeout);
+	MfiStatus (*SysReadData)(MfiSession Mfi, MfiPUInt32 dataclass, MfiPUInt32 datatype, MfiPUInt32 datasrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiUInt32 timeout);
+	MfiStatus (*SysWriteMsg)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 msgclass, MfiUInt32 msgtype, MfiUInt32 msgdstaddr, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 timeout, MfiUInt32 sendtype);
+	MfiStatus (*SysWriteData)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 dataclass, MfiUInt32 datatype, MfiUInt32 datadstaddr, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 timeout, MfiUInt32 sendtype);
+	MfiStatus (*SysReadMsgAsync)(MfiSession Mfi, MfiPUInt32 msgclass, MfiPUInt32 msgtype, MfiPUInt32 msgsrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiPJobId jobId);
+	MfiStatus (*SysWriteMsgAsync)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 msgclass, MfiUInt32 msgtype, MfiUInt32 msgdstaddr, MfiPBuf buf, MfiUInt32 retCnt, MfiPJobId  jobId);
+	MfiStatus (*SysReadDataAsync)(MfiSession Mfi, MfiPUInt32 dataclass, MfiPUInt32 datatype, MfiPUInt32 datasrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt, MfiPJobId jobId);
+	MfiStatus (*SysWriteDataAsync)(MfiSession Mfi, MfiUInt32 priorty, MfiUInt32 dataclass, MfiUInt32 datatype, MfiUInt32 datadstaddr, MfiPBuf buf, MfiUInt32 retCnt, MfiPJobId  jobId);
+	MfiStatus (*ConfigTrigger)(MfiSession Mfi, MfiInt16 trigline, MfiUInt16 mode, MfiUInt32 condition ,MfiPUInt16 oldmode, MfiPUInt32 oldcondition);
+	MfiStatus (*AssertTrigger)(MfiSession Mfi, MfiInt16 trigline);
+	MfiStatus (*DeleteTrigger)(MfiSession Mfi, MfiInt16 trigline);
+	MfiStatus (*Clear)(void);
+}MfiOperations,MfiPOperations;
+
+#endif

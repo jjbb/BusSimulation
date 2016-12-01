@@ -1,0 +1,151 @@
+==32342== Memcheck, a memory error detector
+==32342== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==32342== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==32342== Command: ./mfiapp
+==32342== 
+==32342== Conditional jump or move depends on uninitialised value(s)
+==32342==    at 0x804E4D3: RsrcNameCreate (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BD3F: Rsrc_Module_Attr_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BC37: Rsrc_Module_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A6B6: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== Conditional jump or move depends on uninitialised value(s)
+==32342==    at 0x40A1AC3: ??? (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40A542C: vfprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40C420B: vsprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40ACBAA: sprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x804E4F3: RsrcNameCreate (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BD3F: Rsrc_Module_Attr_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BC37: Rsrc_Module_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A6B6: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== Conditional jump or move depends on uninitialised value(s)
+==32342==    at 0x804E4FC: RsrcNameCreate (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BD3F: Rsrc_Module_Attr_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BC37: Rsrc_Module_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A6B6: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== Use of uninitialised value of size 4
+==32342==    at 0x40A1AB8: ??? (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40A542C: vfprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40C420B: vsprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x40ACBAA: sprintf (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342==    by 0x804E520: RsrcNameCreate (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BD3F: Rsrc_Module_Attr_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805BC37: Rsrc_Module_Init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A6B6: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 
+==32342== Process terminating with default action of signal 2 (SIGINT)
+==32342==    at 0x4000832: ??? (in /lib/ld-2.11.1.so)
+==32342==    by 0x804B177: MfiReadMsg (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805C997: Test_ReceiveMsg (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805CECC: test_resend (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80575F4: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== HEAP SUMMARY:
+==32342==     in use at exit: 60,170 bytes in 269 blocks
+==32342==   total heap usage: 4,235 allocs, 3,966 frees, 136,538 bytes allocated
+==32342== 
+==32342== 60 bytes in 1 blocks are possibly lost in loss record 8 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x8059213: pool_create (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8058CC1: CombineFreamMsg (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8057256: thr_communication (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x404596D: start_thread (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x413851D: clone (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 14 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x8057146: Pthread_init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8057398: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 15 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x805719E: Pthread_init (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8057398: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 16 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x805B4ED: RMOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A65E: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 17 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x805B53F: RMOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805A65E: MfiOpenDefaultRM (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80573CE: SystemInit (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805743D: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 18 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x80494D4: initBusModules (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8057442: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 19 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x805AE7B: RMOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x804A0D1: MfiOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80574DD: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 20 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x805AED0: RMOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x804A0D1: MfiOpen (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x80574DD: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 136 bytes in 1 blocks are possibly lost in loss record 21 of 31
+==32342==    at 0x4025C69: calloc (vg_replace_malloc.c:711)
+==32342==    by 0x4010D2B: _dl_allocate_tls (in /lib/ld-2.11.1.so)
+==32342==    by 0x40462E2: pthread_create@@GLIBC_2.1 (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x8050CCD: EnableEvent (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x804A8CA: MfiEnableEvent (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8057592: main (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342== 
+==32342== 3,392 bytes in 212 blocks are definitely lost in loss record 27 of 31
+==32342==    at 0x4026ED5: malloc (vg_replace_malloc.c:299)
+==32342==    by 0x8049C73: sendDataToIbusSimulation (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805CF0A: Emulator_send (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x8058045: MsgSendToBus (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x805722E: thr_communication (in /home/xiaobei/MY_graduating_task/apptest2/mfiapp)
+==32342==    by 0x404596D: start_thread (in /lib/tls/i686/cmov/libpthread-2.11.1.so)
+==32342==    by 0x413851D: clone (in /lib/tls/i686/cmov/libc-2.11.1.so)
+==32342== 
+==32342== LEAK SUMMARY:
+==32342==    definitely lost: 3,392 bytes in 212 blocks
+==32342==    indirectly lost: 0 bytes in 0 blocks
+==32342==      possibly lost: 1,148 bytes in 9 blocks
+==32342==    still reachable: 55,630 bytes in 48 blocks
+==32342==         suppressed: 0 bytes in 0 blocks
+==32342== Reachable blocks (those to which a pointer was found) are not shown.
+==32342== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==32342== 
+==32342== For counts of detected and suppressed errors, rerun with: -v
+==32342== Use --track-origins=yes to see where uninitialised values come from
+==32342== ERROR SUMMARY: 16 errors from 14 contexts (suppressed: 17 from 8)

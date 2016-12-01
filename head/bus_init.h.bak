@@ -1,0 +1,6 @@
+#ifndef BUS_INIT_H_
+#define BUS_INIT_H_
+
+void BUS_Drive_Init(void);
+
+#endif

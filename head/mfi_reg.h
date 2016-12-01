@@ -1,0 +1,208 @@
+#ifndef _MFI_REG_HEADER_
+#define _MFI_REG_HEADER_
+
+#include "mfiapi.h"
+
+#define filter0 0x0001
+#define filter1 0x0002
+#define filter2 0x0004
+#define filter3 0x0008
+#define ACR0 0x0000
+#define ACR1 0x0001
+#define ACR2 0x0002
+#define ACR3 0x0003
+#define AMR0 0x0004
+#define AMR1 0x0005
+
+//----------------------------------------------------------------------------
+// 总线寄存器
+//----------------------------------------------------------------------------
+#define EMIF_BASE                   0x0C000000//0x62000000
+#define COMMON_REG_BASE             0x00
+#define RST_BUS_REG_BASE            0x8
+#define TIMESYNC_REG_BASE           0xC
+#define MSGBUS_REG_BASE             0x20
+#define DATABUS_REG_BASE            0xA0    
+
+typedef struct __Common_regs
+{
+	MfiUInt16 VID;
+	MfiUInt16 PID;
+	MfiUInt16 LED_status;
+	MfiUInt16 RW_test;
+}Common_regs_t,*Common_regs_p;
+
+typedef struct __Rst_bus_regs
+{
+	MfiUInt16 Bus_rst;
+}Rst_bus_regs_t,*Rst_bus_regs_p;
+
+typedef struct __TimeSync_regs
+{
+//   MfiUInt16 Synerr_int;         // 时间触发同步错误
+	 MfiUInt16 Rst_n;              //0：复位,local time清0；1：local time开始计数
+   MfiUInt16 Sync_trig_set;      // 仅一位为1，指定触发线
+   MfiUInt16 SyncP_senden;       // 发送使能
+   MfiUInt16 T_basic_set;        // 基本周期设定
+   MfiUInt16 Twin_length;        // 固定时间窗设定
+   MfiUInt16 Local_timer;        // 当前时刻寄存器
+   MfiUInt16 Sync_status;        // 当前状态寄存器
+} TimeSync_regs_t;
+typedef TimeSync_regs_t *TimeSync_regs_p;
+
+typedef struct __MsgBus_regs
+{
+	//固定时间窗  0x60
+	 MfiUInt16 Time_msg_body0;           //固定时间窗消息参寄存器
+   MfiUInt16 Time_msg_body1;           //固定时间窗消息参寄存器
+   MfiUInt16 Time_msg_body2;           //固定时间窗消息参寄存器 
+   MfiUInt16 Time_msg_body3;           //固定时间窗消息参寄存器
+   MfiUInt16 Time_msg_body4;           //固定时间窗消息参寄存器
+   MfiUInt16 Time_msg_body5;           //固定时间窗消息参寄存器 
+	 MfiUInt16 Time_msg_head_L;          // 固定时间窗消息头寄存器 低位
+	 MfiUInt16 Time_msg_head_H;          // 固定时间窗消息头寄存器 高位
+	 MfiUInt16 Time_msg_cfg_L;          // 固定时间窗消息配置寄存器 低位
+	 MfiUInt16 Time_msg_cfg_H;          // 固定时间窗消息配置寄存器 高位
+
+//   MfiUInt16 Msg_head_H;              // 用于总线仲裁与接收滤波判断 高位
+//   MfiUInt16 Msg_head_L;              // 用于总线仲裁与接收滤波判断 低位
+//   MfiUInt16 Msg_N_subwin;            // 本节点最多可分配到的子窗数量
+//   MfiUInt16 Msg_Time_W;              // 时间触发消息寄存器的位宽   ?不需要 没有触发消息寄存器
+   MfiUInt16 Msg_Subwin_start_time;  // 子窗起始时刻设置
+   MfiUInt16 Msg_Subwin_length;      // 子窗长度
+   MfiUInt16 Msg_Subwin_load_N;      // 指定子窗设置编号
+   MfiUInt16 Msg_Subwin_load_en;      // 设定指定编号子窗
+   MfiUInt16 Msg_subwin_en;           // 子窗使能
+   MfiUInt16 reserved0;
+   
+   //0x80
+   MfiUInt16 Arb_msg_body0;           //仲裁消息参寄存器
+   MfiUInt16 Arb_msg_body1;           //仲裁消息参寄存器
+   MfiUInt16 Arb_msg_body2;           //仲裁消息参寄存器 
+   MfiUInt16 Arb_msg_body3;           //仲裁消息参寄存器
+   MfiUInt16 Arb_msg_body4;           //仲裁消息参寄存器
+   MfiUInt16 Arb_msg_body5;           //仲裁消息参寄存器 
+   MfiUInt16 Arb_msg_head_L;          // 仲裁消息头寄存器 低位
+   MfiUInt16 Arb_msg_head_H;          // 仲裁消息头寄存器 高位
+	 MfiUInt16 Arb_msg_cfg_L;          // 仲裁消息配置寄存器 低位
+	 MfiUInt16 Arb_msg_cfg_H;          // 仲裁消息配置寄存器 高位
+   MfiUInt16 Arb_msg_load_en;
+   MfiUInt16 Arb_msg_tx_ctrl;
+   MfiUInt16 Arb_msg_Wrdone;          //仲裁消息写入完成
+   MfiUInt16 Arb_msg_comp;            //仲裁消息排序使能
+   MfiUInt16 Arb_msg_status;          //仲裁消息发送状态寄存器  
+   MfiUInt16 Arb_msg_reset;
+      
+   //0xA0
+   MfiUInt16 Msg_ACR0_L;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR0_H;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR1_L;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR1_H;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR2_L;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR2_H;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR3_L;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_ACR3_H;               //仲裁消息滤波设置寄存器  
+   MfiUInt16 Msg_AMR0_L;               //仲裁消息滤波屏蔽寄存器 
+   MfiUInt16 Msg_AMR0_H;               //仲裁消息滤波屏蔽寄存器  
+   MfiUInt16 Msg_AMR1_L;               //仲裁消息滤波屏蔽寄存器 
+   MfiUInt16 Msg_AMR1_H;               //仲裁消息滤波屏蔽寄存器  
+   MfiUInt16 Msg_Filter_ctrl;          //滤波控制使能寄存器  
+   
+//   MfiUInt16 Msg_rxdata;              //消息帧读取寄存器
+	 MfiUInt16 Msg_rx_body0; 
+	 MfiUInt16 Msg_rx_body1; 
+	 /*reserved*/
+	 MfiUInt16 Msg_rx_body2; 
+	 MfiUInt16 Msg_rx_body3; 
+	 MfiUInt16 Msg_rx_body4; 
+	 MfiUInt16 Msg_rx_body5; 
+	 MfiUInt16 Msg_rxhead_L; 
+	 MfiUInt16 Msg_rxhead_H; 
+	 MfiUInt16 Msg_rxcfg_L; 
+	 MfiUInt16 Msg_rxcfg_H; 
+	 /*reserved*/
+	 
+	 MfiUInt16 Msg_rx_en;
+   MfiUInt16 Msg_rxint_flag;          //消息总线接收中断       ****需要有中断使能
+   MfiUInt16 Msg_rxint_clr;           //中断清除标志寄存器 
+   MfiUInt16 Msg_rx_ctrl;           //接收控制寄存器 
+   MfiUInt16 Msg_rx_status;         //接收状态寄存器
+   MfiUInt16 Msg_rx_rst;            //1:消息FIFO不接收数据，0：接收数据
+} MsgBus_regs_t;
+typedef MsgBus_regs_t *MsgBus_regs_p;
+ 
+typedef struct __DataBus_regs
+{
+//   MfiUInt16 Data_subwin_en;           //子窗使能
+   MfiUInt16 Arb_data_head_L;          //仲裁数据头寄存器 低位
+   MfiUInt16 Arb_data_head_H;          //仲裁数据头寄存器 高位
+   MfiUInt16 Arb_data_body_L;            //仲裁数据体寄存器
+   MfiUInt16 Arb_data_body_H;
+   MfiUInt16 Arb_data_ctrl;
+   MfiUInt16 Arb_data_status;
+   MfiUInt16 Arb_data_crc;
+   MfiUInt16 Arb_data_sendrdy;
+   MfiUInt16 Arb_data_rst;
+   
+   MfiUInt16 reserved0;
+   MfiUInt16 reserved1;
+   MfiUInt16 reserved2;
+   MfiUInt16 reserved3;
+   MfiUInt16 reserved4;
+   MfiUInt16 reserved5;
+   MfiUInt16 reserved6;
+   
+   MfiUInt16 Data_ACR0_L;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR0_H;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR1_L;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR1_H;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR2_L;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR2_H;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR3_L;               //仲裁数据滤波设置寄存器  
+   MfiUInt16 Data_ACR3_H;               //仲裁数据滤波设置寄存器 
+   MfiUInt16 Data_AMR0_L;               //仲裁数据滤波屏蔽寄存器 
+   MfiUInt16 Data_AMR0_H;               //仲裁数据滤波屏蔽寄存器  
+   MfiUInt16 Data_AMR1_L;               //仲裁数据滤波屏蔽寄存器 
+   MfiUInt16 Data_AMR1_H;               //仲裁数据滤波屏蔽寄存器 
+   MfiUInt16 Data_Filter_ctrl;          //滤波控制使能寄存器  
+ 
+   MfiUInt16 Data_rxbody_L;              
+   MfiUInt16 Data_rxbody_H;   
+   MfiUInt16 Data_rxhead_L;              
+   MfiUInt16 Data_rxhead_H;    
+   MfiUInt16 Data_int_flag;   
+   MfiUInt16 Data_rx_intclr;           //中断清除标志寄存器      
+   MfiUInt16 Data_rx_ctrl;           //接收控制寄存器 
+   MfiUInt16 Data_rx_status;         //接收状态寄存器
+   MfiUInt16 Data_rx_rst;     
+} DataBus_regs_t;
+typedef DataBus_regs_t *DataBus_regs_p;
+
+extern Common_regs_p     Common_regs;
+extern Rst_bus_regs_p    Rst_bus_regs;
+extern TimeSync_regs_p   TimeSync_regs;
+extern MsgBus_regs_p     MsgBus_regs;
+extern DataBus_regs_p    DataBus_regs;
+
+void WriteReg (int filp , MfiUInt16* reg , MfiUInt16 value);
+MfiUInt16 ReadReg (int filp , MfiUInt16* reg);
+void Vid_Pid_Get(int filp,MfiUInt32* vid,MfiUInt32* pid);
+void LED_Set(int filp,MfiUInt16 status);
+//void Time_Msg_Set(BUS_message_t* time_message, MfiUInt16 Subwin_start_time,MfiUInt16 Subwin_length,MfiUInt16 Subwin_N);
+void TimeSyncInit (int filp,MfiUInt16 trig_select,MfiUInt16 trig_en,MfiUInt16 T_basic,MfiUInt16 Twin_Length);
+void TimeSyncRst(int filp);
+void MsgBusInit (int filp,MfiUInt32 Msg_head);
+void DataBusInit (int filp,MfiUInt32 Data_head);
+
+void MsgFilterEn (int filp,MfiUInt16 fiter);
+void MsgFilterSet (int filp,MfiUInt16 filter,MfiUInt16 m_class,MfiUInt16 m_type,MfiUInt16 m_dst_addr,MfiUInt16 m_src_addr);
+void DataFilterEn (int filp,MfiUInt16 fiter);
+void DataFilterSet (int filp,MfiUInt16 filter,MfiUInt16 d_class,MfiUInt16 d_type,MfiUInt16 d_dst_addr,MfiUInt16 d_src_addr);
+void SubwinSet(int filp,MfiUInt16 subwin,MfiUInt16 starttime,MfiUInt16 length);
+void MsgSubwinEn(int filp,MfiUInt16 subwin);
+void DataSubwinEn(int filp,MfiUInt16 subwin);
+void MsgReceiveEn(int filp,MfiUInt16 value);
+void MsgRxIntEn(int filp,MfiUInt16 value);
+void MsgRxFifoRst(int filp,MfiUInt16 value);
+
+#endif

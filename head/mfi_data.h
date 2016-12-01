@@ -1,0 +1,96 @@
+#ifndef _MFI_DATA_HEADER_
+#define _MFI_DATA_HEADER_
+
+#include "mfi_define.h"
+#include "mfiapi.h"
+#include "mfi_pool.h"
+//#include "mfi_rsrc_manager.h"
+
+//----------------------------------------------------------------------------
+// 数据
+//----------------------------------------------------------------------------
+/*数据仲裁场 32位*/
+typedef struct
+{
+	MfiUInt32 d_single     : 1;     //判断单帧或连续： 0.单帧 1.连续
+	MfiUInt32 d_src_addr   : 5;     //源地址
+	MfiUInt32 d_dst_addr   : 5;     //目的地址
+	MfiUInt32 d_retry      : 1;     //标记数据是否重发
+	MfiUInt32 d_type       : 13;    //数据类型，留给高层协议
+	MfiUInt32 d_class0     : 1;     //仪器数据大类第0位
+	MfiUInt32 priority0    : 1;     //优先级第0位
+	MfiUInt32 d_class1     : 1;     //仪器数据大类第1位
+	MfiUInt32 priority1    : 1;     //优先级第1位
+	MfiUInt32 d_class2     : 1;     //仪器数据大类第2位
+	MfiUInt32 priority2    : 1;     //优先级第2位
+	MfiUInt32 d_class3     : 1;     //仪器数据大类第3位
+}DID_BITS;
+
+typedef union
+{
+	MfiUInt32 all;
+	DID_BITS  bit;
+}DID_REG;
+
+/*数据结构体*/
+typedef struct __DATA
+{
+	DID_REG         d_id;
+	MfiByte         d_char[DATA_MAX_LEN];
+	struct __DATA*  next;
+	struct __DATA*  last;
+}DATA,*DATA_p;
+
+/*数据fifo*/
+typedef struct __DATA_Fifo
+{
+	 pthread_mutex_t          lock;
+	 pthread_cond_t           ready; 
+	 DATA                     head;	                   //数据fifo头
+	 DATA_p                   tail;	                   //数据fifo尾
+	 MfiUInt32                Data_Fifo_Len;           //FIFO深度
+	 MfiUInt32                Data_Fifo_MaxLen;        //长度限制
+	 MfiUInt16                Tmp_Fifo_MaxLen;         //暂存fifo长度限制
+	 MfiUInt16                number[SESSION_MAX_NUM]; //用于记录发送到每一个模块的数据的当前编号，最大值为Tmp_Fifo_MaxLen-1/用于记录不同发送源的待接收数据编号
+	 MfiUInt16                tmplen[SESSION_MAX_NUM]; //用于记录发送到每一个模块的暂存fifo的当前长度，最大值为Tmp_Fifo_MaxLen-1
+	 DATA_p                   tmpHead[SESSION_MAX_NUM];//暂存fifo的队头指针数组，每一个对应一个模块的暂存fifo
+	 DATA_p                   tmpTail[SESSION_MAX_NUM];//暂存fifo的队尾指针数组，每一个对应一个模块的暂存fifo
+}DATA_Fifo,*DATA_Fifo_p;
+/*数据fifo*/
+
+typedef struct _CombData_Head
+{
+	struct _CombData_Head*    next;
+	MfiUInt16                 memsize;   //内存块大小，释放时使用
+	MfiUInt16                 time;      //报文保存时间
+	DID_REG                   d_id;      //
+	MfiByte                   freamnum;  //该报文包含帧数
+	MfiByte                   cnt;       //该报文还有几帧剩余
+	MfiUInt16                 startnum;  //该报文起始帧编号
+	MfiUInt16                 len;       //该报文内容长度
+}CombData_Head,*CombData_Head_p;
+
+typedef struct
+{
+	MfiUInt16                 queue_len;
+	CombData_Head             head;
+}CombData_Fifo,*CombData_Fifo_p;
+
+extern DATA_Fifo dataRxFifo;
+extern DATA_Fifo dataTxFifo;
+extern mem_pools DataSendPool;
+extern mem_pools DataRecPool;
+extern CombData_Fifo dataCombFifo;
+extern pthread_mutex_t DPFreamData_lock;
+
+MfiStatus DataFifo_Init(DATA_Fifo* Data_Fifo_p);
+MfiStatus DataFifo_Delete(DATA_Fifo* Data_Fifo_p);
+MfiStatus DecmposeFreamData(MfiUInt32 dst_ip, DATA_Fifo* Data_Fifo_p, MfiUInt32 priorty, MfiUInt32 dataclass, MfiUInt32 datatype, MfiPBuf buf, MfiUInt32 retCnt, MfiUInt32 flag);
+MfiStatus DataSendToBus(DATA_Fifo* Data_Fifo_p);
+MfiStatus DataReadFromBus(DATA_Fifo* DATA_Fifo_p);
+MfiStatus CombData_Fifo_Init(CombData_Fifo_p pointer);
+MfiStatus CombineFreamData(MfiSession Mfi, DATA_Fifo* Data_Fifo_p, CombData_Fifo* CombData_Fifo_p);
+MfiStatus MfiCombDataFree(MfiByte* buf);
+MfiStatus CombDataChange(CombData_Head_p combData, MfiPUInt32 dataclass, MfiPUInt32 datatype, MfiPUInt32 datasrcaddr, MfiPBuf* bufp, MfiPUInt32 retCnt);
+
+#endif
