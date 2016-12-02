@@ -125,6 +125,7 @@
 
 //message
 #define HOST_IP 1
+#define MY_IP 0
 #define BROADCAST_IP   31
 
 #define MESSAGE_MAX_LEN 12
@@ -141,5 +142,7 @@
 //trigger
 #define MODE_TRIGGER_MASTER 1
 #define MODE_TRIGGER_SLAVER 0
+
+#define MAX_MODULE_NUM 32
 
 #endif

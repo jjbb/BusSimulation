@@ -8,13 +8,15 @@
 extern void* canBeRead(void* arg);
 #endif
 
-busModule busModuleSimulation[32];//建立变量存放前端模块虚拟器的结构体变量
+busModule busModuleSimulation[MAX_MODULE_NUM];//建立变量存放前端模块虚拟器的结构体变量
+moduleTime moduleTime;
 int usingModuleNumber = 0;//现在仪器上可以使用的前端模块虚拟器个数
 //太麻烦了这个功能先不做int callForGetDataModuleIp = 0;//具有数据存储，已经发出中断信号请求过来取走数据的模块IP
 int countToAbandon = 0;//作为需要弃掉一些帧的一个计数
 int initSuccessFlag = 0;
 int TriggerSig1 = 0;
 int TriggerSig2 = 0;
+unsigned int globalTime = 0;
 
 /*
  * Method:    getModuleIP
@@ -32,7 +34,9 @@ int getModuleIP(int boardNumber){
 void creatFrontModuleSimulation(int number){
 	int i;
 	usingModuleNumber = number;
-	for(i=0;i < 32;i++){
+	moduleTime.globalTime = 1;
+	moduleTime.
+	for(i=0;i < MAX_MODULE_NUM;i++){
 		if(i<number){
 			busModuleSimulation[i].working = 1;
 			busModuleSimulation[i].dataHeadNode=NULL;
@@ -46,7 +50,9 @@ void creatFrontModuleSimulation(int number){
 			busModuleSimulation[i].dataLength = 0;
 			busModuleSimulation[i].boardIP = getModuleIP(i);
 			busModuleSimulation[i].registerBuf = NULL;
+			busModuleSimulation[i].bufLength = 0;
 			busModuleSimulation[i].triggerNumber = -1;
+			busModuleSimulation[i].clockTime = i + 10;
 			// pthread_mutex_init(&(busModuleSimulation[i].lock),NULL);
 		}else{
 			busModuleSimulation[i].working = -1;
@@ -69,6 +75,7 @@ int getModuleNum(){
 void initBusModules(){
 	int moduleNum = 0;//新建变量存放板子数量
 	initModuleInfo();
+	globaltime = 0;
 	
 	// #ifdef HOST_TEST
 	// pthread_t pid;
@@ -76,7 +83,7 @@ void initBusModules(){
 	// #endif
 	
 	moduleNum = getModuleNum();//获取板子数量并赋值
-	if(moduleNum > 0 && moduleNum < 32){//只有在板子数量在正常范围内才进行初始化
+	if(moduleNum > 0 && moduleNum < MAX_MODULE_NUM){//只有在板子数量在正常范围内才进行初始化
 		creatFrontModuleSimulation(moduleNum);//创建前端模块虚拟器并完成初始化工作
 		initSuccessFlag = 1;
 	}else{
@@ -395,6 +402,15 @@ void handleSimulationData(char *oldValue, char* newValue, int newDataValueLen){
 	}
 }
 
+void timeGoesBy(){
+	int count = 0;
+	globalTime++;
+	while(count < usingModuleNumber){
+		busModuleSimulation[count].clockTime ++;
+		count++;
+	}
+}
+
 int getHostTime(){
 	int count = 0;
 	while(count < usingModuleNumber){
@@ -414,4 +430,15 @@ void syncModulesTime(unsigned int syncTime){
 		busModuleSimulation[count].clockTime = syncTime;
 		count ++;
 	}
+}
+
+unsigned int getModuleTime(int ipNumber){
+	int count = 0;
+	while(count <usingModuleNumber){
+		if(busModuleSimulation[count].boardIP == ipNumber){
+			return busModuleSimulation[count].clockTime;
+		}
+		count ++;
+	}
+	return 0;
 }

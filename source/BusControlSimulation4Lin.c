@@ -16,6 +16,17 @@
 /***************************************************************************
 *********************可以被李佳林的VISA调用的读写函数***********************
 ****************************************************************************/
+
+void syncClockTime(unsigned int clockTime){
+	unsigned int syncTime = 0;
+	if( clockTime == 0 ){
+		syncTime = getHostTime();
+	}else{
+		syncTime = clockTime;
+	}
+	syncModulesTime(syncTime);
+}
+
  /*
  * VISA当中用来往总线控制发送数据的函数
  *这个方法跟writeDataDown有区别，这个不需要判断是否可写，参数也不一样
@@ -103,6 +114,22 @@
 			}
  		}
  	}
+	else if(m_class_big == (jint)9){	//如果消息大类是9，就是时间同步消息
+		char *p_data_temp = (char *)malloc(DataLenS);//分配DataLenS个字节用来存放消息内容
+ 		int i = 0;
+ 		for(;i<DataLenS;i++){//完成原来消息当中的数据到我自己的内存当中的拷贝
+ 			*(p_data_temp+i) = *(pDataSend+i);//循环执行数据长度次，完成数据全拷贝
+ 		}
+
+		temp.m_dst_addr = (*(MID_BITS *)p_data_temp).m_src_addr;//完成源地址和目的地址的交换
+		(*(MID_BITS *)p_data_temp).m_src_addr = (*(MID_BITS *)p_data_temp).m_dst_addr;//完成源地址和目的地址的交换
+		(*(MID_BITS *)p_data_temp).m_dst_addr = temp.m_dst_addr;//完成源地址和目的地址的交换
+		putDataToModule(m_destination_addr, p_data_temp, DataLenS);//将需要发送的数据放入虚拟前端模块当中，待发送
+
+		unsigned int syncTime = *(pDataSend + Head_Len)<<24 | *(pDataSend + Head_Len+1)<<16 | *(pDataSend + Head_Len+2)<<8 |  *(pDataSend + Head_Len+3);
+
+		syncClockTime(syncTime);
+	 }
 }
 
  /*
@@ -115,6 +142,7 @@ int receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR)
 	return getDataFromModule(pDataReceive, DataLenR);
 			
 }
+
 
 // #ifdef EMULATOR
 // /***************************************************************************

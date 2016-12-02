@@ -27,6 +27,14 @@ typedef struct busSimulationModule{
 
 }busModule;
 
+typedef struct moduleTime{
+	unsigned int globalTime;		//全局时间变量
+	unsigned int timeWindowStart[MAX_MODULE_NUM];	//时间窗
+	unsigned int windowLength;		//时间窗长度
+}
+
+#define fixedTimeWindowLen 5
+
 //函数声明，给其他文件使用
 void initBusModules();//初始化，创建前端模块虚拟器并完成IP初始化
 int isDataEmpty();//判断总线上是否有数据（也就是判断所有模块）
@@ -42,5 +50,6 @@ void syncModulesTime(unsigned int syncTime);
 
 extern int TriggerSig1;
 extern int TriggerSig2;
+extern unsigned int globalTime;
 
 #endif

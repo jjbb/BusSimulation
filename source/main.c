@@ -50,16 +50,38 @@ int main(void)
             sendDataToIbusSimulation((char *)pDataSend, DataLenS);
         }
 
+        if(count == 2){
+            
+        }
+
         if (count == 4)
         {
-            //初始化要发送的数据，"0010100 1000000000000 0 00001 00000 0" + "Hello"; 触发线配置消息
+            //初始化要发送的数据，"0010100 1000000000000 0 00001 00000 0" + "1|2"; 触发线配置消息
             //              消息大类和优先级    消息小类    是否重发 目的地址 源地址 单帧     消息内容
             j = 0;
             DataLenS = 6;
             pDataSend = (char *)malloc(sizeof(char) * DataLenS);
             pDataSend[5] = 0x00;
-            pDataSend[4] = 0x01;
+            pDataSend[4] = 0x02;
             pDataSend[3] = 0x29;
+            pDataSend[2] = 0x00;
+            pDataSend[1] = 0x00;
+            pDataSend[0] = 0x40;
+
+            sendDataToIbusSimulation((char *)pDataSend, DataLenS);
+        }
+
+        if (count == 6)
+        {
+            //初始化要发送的数据，"1000001 1000000000000 0 00001 00000 0" + "1"; 时间同步消息
+            //              消息大类和优先级    消息小类    是否重发 目的地址 源地址 单帧     消息内容
+            j = 0;
+            DataLenS = 6;
+            pDataSend = (char *)malloc(sizeof(char) * DataLenS);
+            for(j=0; j<4; j++){
+                pDataSend[j + Head_Len] = *( ((char*)(&globalTime)) +j );
+            }
+            pDataSend[3] = 0x83;
             pDataSend[2] = 0x00;
             pDataSend[1] = 0x00;
             pDataSend[0] = 0x40;
@@ -95,6 +117,7 @@ int main(void)
                 handleSimulationData(dataValue, newValue, newDataValueLen);
                 receiveDataFromIbusSimulation(&pReceiveData, &DataLenR);
                 containHead = 1;
+                printf("Read the data:\n");
                 printMessage(pReceiveData, DataLenR, containHead);
             }
         }
@@ -116,8 +139,17 @@ int main(void)
         {
             //event2 happen
             printf("Event 2 is triggered!!!\n");
+            int clockTime = getModuleTime(HOST_IP);
+            if(clockTime){
+                printf("Read the time of Host Module is: %d\n", clockTime);
+            }
+            clockTime = getModuleTime(MY_IP);
+            if(clockTime){
+                printf("Read the time of this Module is: %d\n", clockTime);
+            }
         }
         count++;
+        timeGoesBy();
     }
     printf("Hello world");
     return 0;
