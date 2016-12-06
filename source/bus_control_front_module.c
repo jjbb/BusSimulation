@@ -3,13 +3,14 @@
 #include "bus_control_datatype.h"
 #include "mfi_define.h"
 #include "bus_control_datatype.h"
+#include "mfi_module_info.h"
 #ifdef HOST_TEST
 // #include <pthread.h>
 extern void* canBeRead(void* arg);
 #endif
 
 busModule busModuleSimulation[MAX_MODULE_NUM];//建立变量存放前端模块虚拟器的结构体变量
-moduleTime moduleTime;
+moduleSubWin moduleTime;
 int usingModuleNumber = 0;//现在仪器上可以使用的前端模块虚拟器个数
 //太麻烦了这个功能先不做int callForGetDataModuleIp = 0;//具有数据存储，已经发出中断信号请求过来取走数据的模块IP
 int countToAbandon = 0;//作为需要弃掉一些帧的一个计数
@@ -35,7 +36,7 @@ void creatFrontModuleSimulation(int number){
 	int i;
 	usingModuleNumber = number;
 	moduleTime.globalTime = 1;
-	moduleTime.
+	
 	for(i=0;i < MAX_MODULE_NUM;i++){
 		if(i<number){
 			busModuleSimulation[i].working = 1;
@@ -57,6 +58,8 @@ void creatFrontModuleSimulation(int number){
 		}else{
 			busModuleSimulation[i].working = -1;
 		}
+		moduleTime.subWindowStart[i] = 0;
+		moduleTime.subWindowLength[i] = 0;
 	}
 }
 
@@ -75,7 +78,6 @@ int getModuleNum(){
 void initBusModules(){
 	int moduleNum = 0;//新建变量存放板子数量
 	initModuleInfo();
-	globaltime = 0;
 	
 	// #ifdef HOST_TEST
 	// pthread_t pid;
@@ -404,7 +406,11 @@ void handleSimulationData(char *oldValue, char* newValue, int newDataValueLen){
 
 void timeGoesBy(){
 	int count = 0;
-	globalTime++;
+	if( globalTime > fixedTimeWindowLen ){
+		globalTime = 0;
+	}else{
+		globalTime++;
+	}
 	while(count < usingModuleNumber){
 		busModuleSimulation[count].clockTime ++;
 		count++;
@@ -441,4 +447,55 @@ unsigned int getModuleTime(int ipNumber){
 		count ++;
 	}
 	return 0;
+}
+
+//设置子窗口的起始地址和子窗口长度, 和本模块可以发送的窗口
+void setTimeWindow( unsigned int* subWindowStart, unsigned int* windowLength , int *subWinEN){	
+
+	int i = 0;
+	for(i=0; i < SUBWIN_NUM; i++){		
+		moduleTime.subWindowStart[i] = subWindowStart[i];	//
+		moduleTime.subWindowLength[i] = windowLength[i] + 1;	//
+		moduleTime.subWinEN[i] = subWinEN[i];
+	}
+	
+}
+
+//自增长式设置子窗口，为防止各子窗口间时间重合而设计
+void setSubWindow( unsigned int *windowLength, int *subWinEN ){
+	int i = 0;
+	for(i=0; i<SUBWIN_NUM; i++){
+		if(i == 0){
+			moduleTime.subWindowStart[i] = 0;
+		}else{
+			moduleTime.subWindowStart[i] = moduleTime.subWindowStart[i-1] + moduleTime.subWindowLength[i-1];
+		}
+		moduleTime.subWindowLength[i] = windowLength[i] + 1;
+		moduleTime.subWinEN[i] = subWinEN[i];
+	}
+
+}
+
+int canBeSend(){
+	int i = 0;
+	
+	while( i < SUBWIN_NUM){
+		if( globalTime > moduleTime.subWindowStart[i] && globalTime < (moduleTime.subWindowStart[i] + moduleTime.subWindowLength[i]) ){
+			//当前时刻位于某个子窗口中，判断该子窗口是否可以发送
+			if(moduleTime.subWinEN[i] == 1){
+				return 1;
+			}else{
+				//当前时刻不属于本结点可发送的时间窗，返回，等待
+				return 0;
+			}
+		}else if( globalTime < moduleTime.subWindowStart[i] ){
+			//当前时刻还未进入固定子窗口时间，返回，等待
+			return 0;
+		}
+
+		// 时间已过本时间窗，递进到下一个时间窗
+		i++;
+	}
+	// 时间已过所有时间窗，返回，进入仲裁
+	return 2;
 }

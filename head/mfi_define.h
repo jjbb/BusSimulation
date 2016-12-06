@@ -128,6 +128,8 @@
 #define MY_IP 0
 #define BROADCAST_IP   31
 
+#define Head_Len 4
+
 #define MESSAGE_MAX_LEN 12
 #define MSG_FIFO_DEF_LEN 100
 #define COMBMSG_KEEP_TIME 500

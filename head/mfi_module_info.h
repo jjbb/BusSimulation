@@ -23,7 +23,7 @@ typedef struct __Module
 extern Module_t Module;
 
 // void Module_Useful_check(void);
-void initModuelInfo();
+void initModuleInfo();
 MfiUInt32 Module_IP_Find(MfiUInt32 mod_mac);
 
 #endif
