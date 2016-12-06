@@ -35,7 +35,7 @@ void creatFrontModuleSimulation(int number){
 	int i;
 	usingModuleNumber = number;
 	moduleTime.globalTime = 1;
-	moduleTime.
+	
 	for(i=0;i < MAX_MODULE_NUM;i++){
 		if(i<number){
 			busModuleSimulation[i].working = 1;
@@ -53,9 +53,13 @@ void creatFrontModuleSimulation(int number){
 			busModuleSimulation[i].bufLength = 0;
 			busModuleSimulation[i].triggerNumber = -1;
 			busModuleSimulation[i].clockTime = i + 10;
+			moduleTime[i].timeWindowStart = 0;
+			moduleTime[i].windowLength = 0;
 			// pthread_mutex_init(&(busModuleSimulation[i].lock),NULL);
 		}else{
 			busModuleSimulation[i].working = -1;
+			moduleTime[i].timeWindowStart = 0;
+			moduleTime[i].windowLength = 0;
 		}
 	}
 }
@@ -75,7 +79,6 @@ int getModuleNum(){
 void initBusModules(){
 	int moduleNum = 0;//新建变量存放板子数量
 	initModuleInfo();
-	globaltime = 0;
 	
 	// #ifdef HOST_TEST
 	// pthread_t pid;
@@ -441,4 +444,27 @@ unsigned int getModuleTime(int ipNumber){
 		count ++;
 	}
 	return 0;
+}
+
+void setTimeWindow(int ipNumber, unsigned int windowLength ){
+	int subWindowIndex = moduleTime.subWindowIndex;	//获取还未使用的子窗口的下标
+	moduleTime.subWindowModuleIP[subWindowIndex] = ipNumber;	//标记该固定子窗口分配给此IP
+	moduleTime.subWindowStart[subWindowIndex] = moduleTime.subWindowStart[subWindowIndex - 1] + moduleTime.subWindowLength[subWindowIndex - 1] + 4;	//
+	moduleTime.subWindowLength[subWindowIndex] = windowLength;	//
+
+	int count = 0;
+	while(count < usingModuleNumber){
+		if(moduleTime[couont].subWindowModuleIP == ipNumber){
+			moduleTime[count].timeWindowStart = windowStart;
+			if( windowLength == 0 ){
+				moduleTime[count].windowLength = fixedTimeWindowLen;
+			}else{
+				moduleTime[count].windowLength = windowLength;
+			}
+			return;
+		}else{
+			count++;
+		}
+	}
+	
 }

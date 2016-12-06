@@ -29,8 +29,12 @@ typedef struct busSimulationModule{
 
 typedef struct moduleTime{
 	unsigned int globalTime;		//全局时间变量
-	unsigned int timeWindowStart[MAX_MODULE_NUM];	//时间窗
-	unsigned int windowLength;		//时间窗长度
+	unsigned int windowLength;		//基本时间窗长度
+	unsigned int subWindowStart[MAX_MODULE_NUM];	//固定时间子窗
+	unsigned int subWindowLength[MAX_MODULE_NUM];		//固定时间子窗长度
+	unsigned int subWindowModuleIP[MAX_MODULE_NUM];	//固定子窗对应的模块IP
+	int subWindowIndex;	//已使用的子窗
+
 }
 
 #define fixedTimeWindowLen 5
