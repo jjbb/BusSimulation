@@ -3,7 +3,7 @@
 
 #include "bus_control_general_lib.h"
 #include "mfi_module_info.h"
-#include <pthread.h>
+#include "mfi_define.h"
 
 //数据节点结构体
 typedef struct dataNode{
@@ -28,16 +28,15 @@ typedef struct busSimulationModule{
 }busModule;
 
 typedef struct moduleTime{
-	unsigned int globalTime;		//全局时间变量
-	unsigned int windowLength;		//基本时间窗长度
-	unsigned int subWindowStart[MAX_MODULE_NUM];	//固定时间子窗
-	unsigned int subWindowLength[MAX_MODULE_NUM];		//固定时间子窗长度
-	unsigned int subWindowModuleIP[MAX_MODULE_NUM];	//固定子窗对应的模块IP
-	int subWindowIndex;	//已使用的子窗
+	unsigned int globalTime;		//全局时间变量的本地寄存
+	unsigned int subWindowStart[SUBWIN_NUM];	//固定时间子窗
+	unsigned int subWindowLength[SUBWIN_NUM];		//固定时间子窗长度
+	unsigned int subWinEN[SUBWIN_NUM];	//固定子窗对应的模块IP
+	// unsigned int windowLength;		//基本时间窗长度
+	// int subWindowIndex;	//已使用的子窗
+}moduleSubWin;
 
-}
-
-#define fixedTimeWindowLen 5
+#define fixedTimeWindowLen 50
 
 //函数声明，给其他文件使用
 void initBusModules();//初始化，创建前端模块虚拟器并完成IP初始化
@@ -50,7 +49,13 @@ int setModuleTriggerNum(int ipNumber, int TriggerNum);//将收到的触发线编号值设置
 int cancelModuleTriggerNum(int ipNumber);//将对应IP地址的模块中的触发线编号值取消掉
 void generateModuleTriggerSignal();//因为触发线循环产生模块的用户信号
 void handleSimulationData();
+void timeGoesBy();
+int getHostTime();
+unsigned int getModuleTime(int ipNumber);
 void syncModulesTime(unsigned int syncTime);
+void setTimeWindow(unsigned int *subWindowStart, unsigned int*subWindowLength, int *subWinEN);
+void setSubWindow( unsigned int *windowLength, int *subWinEN );
+int canBeSend();
 
 extern int TriggerSig1;
 extern int TriggerSig2;

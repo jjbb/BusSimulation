@@ -36,10 +36,10 @@ void syncClockTime(unsigned int clockTime){
  	//获取仲裁场32位，然后进行解析
  	MID_BITS temp = *(MID_BITS *)pDataSend;
  	paraseMessageType(temp);
-	temp.m_dst_addr = (*(MID_BITS *)p_data_temp).m_src_addr;//完成源地址和目的地址的交换
-	(*(MID_BITS *)p_data_temp).m_src_addr = (*(MID_BITS *)p_data_temp).m_dst_addr;//完成源地址和目的地址的交换
-	(*(MID_BITS *)p_data_temp).m_dst_addr = temp.m_dst_addr;//完成源地址和目的地址的交换
-	putDataToModule(m_destination_addr, p_data_temp, DataLenS);//将需要发送的数据放入虚拟前端模块当中，待发送
+
+	 if( 0 == canBeSend() ){
+		 return;
+	 }
  	
  	if(m_class_big == (jint)5 || (m_class_big == (jint)15)){//如果消息大类是5，就是app消息，那么就把这个app消息的源地址和目标地址进行交换
  		char *p_data_temp = (char *)malloc(DataLenS);//分配DataLenS个字节用来存放消息内容
@@ -47,6 +47,11 @@ void syncClockTime(unsigned int clockTime){
  		for(;i<DataLenS;i++){//完成原来消息当中的数据到我自己的内存当中的拷贝
  			*(p_data_temp+i) = *(pDataSend+i);//循环执行数据长度次，完成数据全拷贝
  		}
+
+		// temp.m_dst_addr = (*(MID_BITS *)p_data_temp).m_src_addr;//完成源地址和目的地址的交换
+		// (*(MID_BITS *)p_data_temp).m_src_addr = (*(MID_BITS *)p_data_temp).m_dst_addr;//完成源地址和目的地址的交换
+		// (*(MID_BITS *)p_data_temp).m_dst_addr = temp.m_dst_addr;//完成源地址和目的地址的交换
+		// putDataToModule(m_destination_addr, p_data_temp, DataLenS);//将需要发送的数据放入虚拟前端模块当中，待发送
 		
  	}else if(m_class_big == (jint)6){//如果消息大类是6，就是触发器消息或者属性设置消息，那么就把这个触发器消息的源地址和目标地址进行交换
 		char *p_data_temp = (char *)malloc(DataLenS);//分配DataLenS个字节用来存放消息内容

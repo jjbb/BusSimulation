@@ -18,7 +18,7 @@
         },
         {
             "name": "Win32",
-            "includePath": ["D:/Program Files (x86)/CodeBlocks/MinGW/include", "${workspace}/head"],
+            "includePath": [ "${workspace}/head","D:/Program Files (x86)/CodeBlocks/MinGW/include"],
             "browse" : {
                 "limitSymbolsToIncludedHeaders" : true,
                 "databaseFilename" : ""

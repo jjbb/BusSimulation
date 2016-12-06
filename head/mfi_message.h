@@ -26,8 +26,6 @@ typedef struct
 	MfiUInt32 m_class3     : 1;     //仪器消息大类第3位
 }MID_BITS;
 
-#define Head_Len 4
-
 typedef union
 {
 	MfiUInt32 all;
