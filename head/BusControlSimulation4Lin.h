@@ -9,7 +9,8 @@
 #define BUSCONTROLSIMULATION4LIN_H_
 
 void sendDataToIbusSimulation(char *pDataSend, int DataLenS);	
-void receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR); 
+int receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR); 
 void syncClockTime(unsigned int clockTime);
+void initSubWinInfo();
 #define jint int
 #endif /* BUSCONTROLSIMULATION4LIN_H_ */

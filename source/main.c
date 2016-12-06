@@ -81,7 +81,7 @@ int main(void)
             DataLenS = 6;
             pDataSend = (char *)malloc(sizeof(char) * DataLenS);
             for(j=0; j<4; j++){
-                pDataSend[j + Head_Len] = *( ((char*)(&globalTime)) +j );
+                pDataSend[j + Head_Len] = *( (char*)(&(moduleTime.globalTime)) +j );
             }
             pDataSend[3] = 0x83;
             pDataSend[2] = 0x00;
@@ -198,21 +198,4 @@ void printMessage(char *string, unsigned int stringLen, int containHead)
         }
         printf("\n");
     }
-}
-
-void initSubWinInfo(){
-    unsigned int mSubWindowStart[SUBWIN_NUM];
-    unsigned int mSubWindowLength[SUBWIN_NUM];
-    int mSubWinEN[SUBWIN_NUM];
-    int i=0;
-    for(i=0; i<SUBWIN_NUM; i++){
-        mSubWindowStart[i] = i * 4;  //每4个基本单位划分一个时间窗
-        mSubWindowLength[i] = 2;     //可发送时间窗长度为2
-        if( i % 5 == 0){    //每5次可发送一次
-            mSubWinEN[i] = 1;
-        }else{
-            mSubWinEN[i] = 0;
-        }
-    }
-    setTimeWindow(mSubWindowStart, mSubWindowLength, mSubWinEN);
 }

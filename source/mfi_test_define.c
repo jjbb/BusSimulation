@@ -557,14 +557,14 @@ void*asyncWrite(void* attr){
 //	}
 //}
 
-extern void sendDataToIbusSimulation(char*, int);
-extern int receiveDataFromIbusSimulation(char**, int*);
+// extern void sendDataToIbusSimulation(char*, int);
+// extern int receiveDataFromIbusSimulation(char**, int*);
 
-void Emulator_send(char* buf, int len){
-	sendDataToIbusSimulation(buf,len);
-	return;
-}
+// void Emulator_send(char* buf, int len){
+// 	sendDataToIbusSimulation(buf,len);
+// 	return;
+// }
 
-int Emulator_recv(char** buf, int* len){
-	return receiveDataFromIbusSimulation(buf,len);
-}
+// int Emulator_recv(char** buf, int* len){
+// 	return receiveDataFromIbusSimulation(buf,len);
+// }

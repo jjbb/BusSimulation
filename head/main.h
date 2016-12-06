@@ -5,6 +5,5 @@
 #include "mfi_define.h"
 #include <stdio.h>
 void printMessage(char* string, unsigned int stringLen, int containHead);
-void initSubWinInfo();
 
 #endif 

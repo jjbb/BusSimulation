@@ -36,8 +36,6 @@ typedef struct moduleTime{
 	// int subWindowIndex;	//已使用的子窗
 }moduleSubWin;
 
-#define fixedTimeWindowLen 50
-
 //函数声明，给其他文件使用
 void initBusModules();//初始化，创建前端模块虚拟器并完成IP初始化
 int isDataEmpty();//判断总线上是否有数据（也就是判断所有模块）
@@ -57,8 +55,10 @@ void setTimeWindow(unsigned int *subWindowStart, unsigned int*subWindowLength, i
 void setSubWindow( unsigned int *windowLength, int *subWinEN );
 int canBeSend();
 
+#define fixedTimeWindowLen 50
+
 extern int TriggerSig1;
 extern int TriggerSig2;
-extern unsigned int globalTime;
+extern moduleSubWin moduleTime;
 
 #endif

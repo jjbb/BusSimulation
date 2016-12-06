@@ -130,6 +130,8 @@
 
 #define Head_Len 4
 
+#define JIANXI 2
+
 #define MESSAGE_MAX_LEN 12
 #define MSG_FIFO_DEF_LEN 100
 #define COMBMSG_KEEP_TIME 500

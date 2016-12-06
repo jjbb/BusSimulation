@@ -1,5 +1,4 @@
-#include "com_zju_simulation_handlejni_HandleJni.h"
-
+#include "BusControlSimulation4Lin.h"
 #include "mfi_linux.h"
 #include "mfiapi.h"
 #include "mfi_test_define.h"
@@ -14,7 +13,7 @@
 // int initSuccessFlag = 0;//初始化成功标志位，正为初始化成功，负为失败，0为未操作
 
 /***************************************************************************
-*********************可以被李佳林的VISA调用的读写函数***********************
+*********************可以被调用的读写函数***********************
 ****************************************************************************/
 
 void syncClockTime(unsigned int clockTime){
@@ -147,6 +146,23 @@ int receiveDataFromIbusSimulation(char **pDataReceive, int *DataLenR)
 {
 	return getDataFromModule(pDataReceive, DataLenR);
 			
+}
+
+void initSubWinInfo(){
+    unsigned int mSubWindowStart[SUBWIN_NUM];
+    unsigned int mSubWindowLength[SUBWIN_NUM];
+    int mSubWinEN[SUBWIN_NUM];
+    int i=0;
+    for(i=0; i<SUBWIN_NUM; i++){
+        mSubWindowStart[i] = i * 2;  //每2个基本单位划分一个时间窗
+        mSubWindowLength[i] = 2;     //可发送时间窗长度为2
+        if( i % 3 == 0){    //每3次可发送一次
+            mSubWinEN[i] = 1;
+        }else{
+            mSubWinEN[i] = 0;
+        }
+    }
+    setTimeWindow(mSubWindowStart, mSubWindowLength, mSubWinEN);
 }
 
 
